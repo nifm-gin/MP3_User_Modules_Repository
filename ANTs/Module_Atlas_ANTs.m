@@ -88,7 +88,6 @@ if isempty(opt)
     VariableNames = {'Names_Display', 'Type', 'Default', 'PSOM_Fields', 'Scans_Input_DOF', 'IsInputMandatoryOrOptional','Help'};
     opt.table = table(user_parameter(1,:)', user_parameter(2,:)', user_parameter(3,:)', user_parameter(4,:)', user_parameter(5,:)', user_parameter(6,:)', user_parameter(7,:)','VariableNames', VariableNames);
     %%
-    
     % So for no input file is selected and therefore no output
     % The output file will be generated automatically when the input file
     % will be selected by the user
