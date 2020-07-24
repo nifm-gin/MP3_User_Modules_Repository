@@ -194,7 +194,7 @@ end
 
 %% Syntax
 if ~exist('files_in','var')||~exist('files_out','var')||~exist('opt','var')
-    error('Module_Coreg_Est:brick','Bad syntax, type ''help %s'' for more info.',mfilename)
+    error('Module_ClusteringGMM:brick','Bad syntax, type ''help %s'' for more info.',mfilename)
 end
 
 
