@@ -13,7 +13,7 @@ if isempty(opt)
     module_option(:,2)   = {'flag_test',true};
     module_option(:,3)   = {'output_filename_ext','_Replaced'};
     module_option(:,4)   = {'OutputSequenceName','Extension'};
-    module_option(:,5)   = {'InitialValue',0};
+    module_option(:,5)   = {'InitialValue','0'};
     module_option(:,6)   = {'FinalValue',0};
     module_option(:,7)   = {'RefInput',1};
     module_option(:,8)   = {'InputToReshape',1};
@@ -37,7 +37,7 @@ if isempty(opt)
     user_parameter(:,2)   = {'Select one scan as input','1ScanOr1ROI','','',{'SequenceName'}, 'Mandatory',''};
     user_parameter(:,3)   = {'Parameters','','','','', '', ''};
     user_parameter(:,4)   = {'   .Output filename extension','char','_Replaced','output_filename_ext','', '',''};
-    user_parameter(:,5)   = {'   .Initial Value','numeric',0,'InitialValue','', '','The value that need to be replaced by the final value.'};
+    user_parameter(:,5)   = {'   .Initial Value','char',0,'InitialValue','', '','The value that need to be replaced by the final value.'};
     user_parameter(:,6)   = {'   .Final Value','numeric',0,'FinalValue','', '','The Value by which replace the the initial value'};
     VariableNames = {'Names_Display', 'Type', 'Default', 'PSOM_Fields', 'Scans_Input_DOF', 'IsInputMandatoryOrOptional','Help'};
     opt.table = table(user_parameter(1,:)', user_parameter(2,:)', user_parameter(3,:)', user_parameter(4,:)', user_parameter(5,:)', user_parameter(6,:)', user_parameter(7,:)','VariableNames', VariableNames);
@@ -102,8 +102,12 @@ N = N*info.MultiplicativeScaling;
 info.MultiplicativeScaling = 1;
 
 NewImages = N;
+if strcmpi(opt.InitialValue, 'nan')
+    NewImages(isnan(NewImages)) = opt.FinalValue;
+else
+    NewImages(NewImages == str2double(opt.InitialValue)) = opt.FinalValue;
+end
 
-NewImages(NewImages == opt.InitialValue) = opt.FinalValue;
 
 
 
