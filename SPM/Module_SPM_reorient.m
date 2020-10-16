@@ -45,7 +45,7 @@ if isempty(opt)
         'The transformations are considered to be relative to any existing transformations that may be stored.'
         ''
         'For more information, please refere spm functions'}'};
-    user_parameter(:,2)   = {'Reference Image','1Scan','','', {'SequenceName'},'Mandatory',...
+    user_parameter(:,2)   = {'Reference Image','1ScanOr1ROI','','', {'SequenceName'},'Mandatory',...
         'Select the scans to modify'};
     user_parameter(:,3)   = {'Parameters','','','','', '', ''};
     user_parameter(:,4)   = {'   .Output filename extension','char','_Reoriented','output_filename_ext','', '',''};
@@ -108,7 +108,6 @@ end
 % First duplicate the source scan using the prefix string (user-defined)
 % Otherwise the spm will overwrite the file!!
 copyfile(files_in.In1{1},  files_out.In1{1})
-copyfile(strrep(files_in.In1{1},'.nii','.json'),  strrep(files_out.In1{1},'.nii','.json'))
 
 userdata  = [opt.right opt.forward opt.up opt.pitch opt.roll opt.yall opt.resize_x opt.resize_y opt.resize_z];
 
@@ -121,11 +120,13 @@ input_matrice = spm_get_space(files_out.In1{1});
 spm_get_space(files_out.In1{1},matrice_transformation*input_matrice);
 
 
-% update the json
-[path, name, ~] = fileparts(files_out.In1{1});
-jsonfile = [path, '/', name, '.json'];
-J = ReadJson(jsonfile);
-J = KeepModuleHistory(J, struct('files_in', files_in, 'files_out', files_out, 'opt', opt, 'ExecutionDate', datestr(datetime('now'))), mfilename);
-
-WriteJson(J, jsonfile)
-
+% update the json if needed
+if exist(strrep(files_in.In1{1},'.nii','.json'), 'file')
+    copyfile(strrep(files_in.In1{1},'.nii','.json'),  strrep(files_out.In1{1},'.nii','.json'))
+    [path, name, ~] = fileparts(files_out.In1{1});
+    jsonfile = [path, '/', name, '.json'];
+    J = ReadJson(jsonfile);
+    J = KeepModuleHistory(J, struct('files_in', files_in, 'files_out', files_out, 'opt', opt, 'ExecutionDate', datestr(datetime('now'))), mfilename);
+    
+    WriteJson(J, jsonfile) 
+end
