@@ -262,14 +262,17 @@ end
 new_pathname = strcat(char(opt.Table_out.Path(1)),   char(opt.Table_in.Filename(1)), '.nii');
 % if this module is executed in a pipeline, is it possible that
 % files_in.In1{1} is already in the Tmp --> if so, we rename it
-if strcmp(files_in.In1{1}, new_pathname)
-    new_pathname = strrep(new_pathname, char(opt.Table_in.Filename(1)), [char(opt.Table_in.Filename(1)), '-bis']);
-    opt.Table_in.Filename(1) = categorical(cellstr([char(opt.Table_in.Filename(1)), '-bis']));
-    opt.Table_in.SequenceName(1) = categorical(cellstr([char(opt.Table_in.SequenceName(1)), '-bis']));
+% if strcmp(files_in.In1{1}, new_pathname)
+%     new_pathname = strrep(new_pathname, char(opt.Table_in.Filename(1)), [char(opt.Table_in.Filename(1)), '-bis']);
+%     toto = strcat(string(opt.Table_in.Filename(1)), '-bis');
+%     opt.Table_in.Filename(1) = {toto};
+%     opt.Table_in.SequenceName(1) = strcat(string(opt.Table_in.SequenceName(1)), '-bis');
+% end
+if ~strcmp(files_in.In1{1}, new_pathname)
+    copyfile(files_in.In1{1},   new_pathname)
+    copyfile(strrep(files_in.In1{1},'.nii','.json'),  strrep(new_pathname,'.nii','.json'))  
 end
 
-copyfile(files_in.In1{1},   new_pathname)
-copyfile(strrep(files_in.In1{1},'.nii','.json'),  strrep(new_pathname,'.nii','.json'))
 files_in.In1{1} = new_pathname;
 
 
