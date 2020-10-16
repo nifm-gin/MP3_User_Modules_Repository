@@ -214,7 +214,9 @@ for  i = 1:numel(input_scans_name)
         % first, copy all inputs to the /tmp fold
         % Otherwise, spm will generate the output scans in the wrong
         % directory
-        curent_Table = opt.Table_in(opt.Table_in.Patient == opt.Table_out.Patient(j) & opt.Table_in.Tp == opt.Table_out.Tp(j) & opt.Table_in.SequenceName == input_scans_name(i), :);
+        index = string(opt.Table_in.Patient) == string(opt.Table_out.Patient(j)) & string(opt.Table_in.Tp) == string(opt.Table_out.Tp(j)) & string(opt.Table_in.SequenceName) == string(input_scans_name(i));
+        curent_Table = opt.Table_in(index, :);
+        
         curent_nii_filename = [char(curent_Table.Path) char(curent_Table.Filename) '.nii'];
         if ~strcmp(curent_nii_filename,  strrep(curent_nii_filename, '/Derived_data/', '/Tmp/'))
             copyfile(curent_nii_filename,  strrep(curent_nii_filename, '/Derived_data/', '/Tmp/'));
@@ -289,7 +291,7 @@ toc
 for j=1:size(opt.Table_out,1)
     % copy the json of the first input
     [path, name, ext] = fileparts(strrep(matlabbatch{1}.spm.tools.dartel.warp.images{1}{j}, ',1', ''));
-    curent_Table = opt.Table_in(opt.Table_in.Filename == name,:);
+    curent_Table = opt.Table_in(strcmp(cellstr(opt.Table_in.Filename), name),:);
 
     %curent_Table = opt.Table_in(opt.Table_in.Patient == opt.Table_out.Patient(j) & opt.Table_in.Tp == opt.Table_out.Tp(j) & opt.Table_in.SequenceName == input_scans_name(i), :);
     curent_json_filename = [char(curent_Table.Path) char(curent_Table.Filename) '.json'];
