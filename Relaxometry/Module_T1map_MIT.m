@@ -144,7 +144,13 @@ opt.table = table(user_parameter(1,:)', user_parameter(2,:)', user_parameter(3,:
   
 end
 %%%%%%%%
+% debug
+if isfield(opt, 'output_filename_ext')
+    opt.output_filename = opt.output_filename_ext;
+end
+
 opt.NameOutFiles = {opt.output_filename};
+
 
 if isempty(files_out)
     opt.Table_out = opt.Table_in;
