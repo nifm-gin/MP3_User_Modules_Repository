@@ -35,7 +35,7 @@ if isempty(opt)
     % --> user_parameter(7,:) = Help : text data which describe the parameter (it
     % will be display to help the user)
     user_parameter(:,1)   = {'Description','Text','','','', '','Write out warped images : refered as old normalisation write in spm12'}  ;
-    user_parameter(:,2)   = {'Images to transform','XScan','','',{'SequenceName'}, 'Mandatory',''};
+    user_parameter(:,2)   = {'Images to transform','XScanOrXROI','','',{'SequenceName'}, 'Mandatory',''};
     user_parameter(:,3)   = {'Transformation information','1mat','','',{'SequenceName'}, 'Mandatory','the transformation is store in a _seg_inv_sn.mat or _seg_sn.mat file obtained from the module SPM_old_segment'};
     user_parameter(:,4)   = {'Writing options','','','','','',''};
     user_parameter(:,5)   = {'   .Preserve','cell',{'Preserve Concentrations', 'Preserve Amount'},'Preserve','','',...
@@ -73,8 +73,11 @@ if isempty(opt)
     
 end
 %%%%%%%%
-% select only the input scans and not the .mat files
-table_in_scans = opt.Table_in(opt.Table_in.Type == 'Scan',:);
+% select only the images to transform (the last row corresponds to the
+% _sn.mat file
+table_in_scans = opt.Table_in(1:end-1,:);
+
+
 if isempty(files_out)
     opt.Table_out = table();
     for i = 1 : size(table_in_scans,1)
@@ -104,16 +107,16 @@ end
 if opt.flag_test == 1
     return
 end
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% The core of the brick starts here %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 [Status, Message, Wrong_File] = Check_files(files_in);
 if ~Status
     error('Problem with the input file : %s \n%s', Wrong_File, Message)
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% The core of the brick starts here %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %  interpolation method (0-7)
 switch opt.Interpolation
     case 'Nearest neighbour'
@@ -170,22 +173,29 @@ for i = 1:size(files_in.In1,2)
     % % First duplicate the reference image to the tmp folder and update the
     % files_in.In1 variable
     new_pathname = strcat(char(opt.Table_out.Path(1)),   char(opt.Table_in.Filename(i)), '.nii');
-    copyfile(files_in.In1{i},   new_pathname)
-    copyfile(strrep(files_in.In1{i},'.nii','.json'),  strrep(new_pathname,'.nii','.json'))  
+    if ~strcmp(files_in.In1{i},   new_pathname)
+        copyfile(files_in.In1{i},   new_pathname)
+        if exist(strrep(files_in.In1{i},'.nii','.json'), 'file')
+            copyfile(strrep(files_in.In1{i},'.nii','.json'),  strrep(new_pathname,'.nii','.json'))
+        end
+    end
+    
     files_in.In1{i} = new_pathname;
     
     VO = spm_write_sn(files_in.In1{i},files_in.In2{1},flags);
     VO.fname = files_out.In1{i};
     spm_write_vol(VO, VO.dat);
     %% Json Processing
-    [path, name, ~] = fileparts(files_in.In1{i});
-    jsonfile = [path, '/', name, '.json'];
-    J = ReadJson(jsonfile);
-    
-    J = KeepModuleHistory(J, struct('files_in', files_in, 'files_out', files_out, 'opt', opt, 'ExecutionDate', datestr(datetime('now'))), mfilename);
-    
-    [path, name, ~] = fileparts(files_out.In1{i});
-    jsonfile = [path, '/', name, '.json'];
-    WriteJson(J, jsonfile)
+    if exist(strrep(files_in.In1{i},'.nii','.json'), 'file')
+        [path, name, ~] = fileparts(files_in.In1{i});
+        jsonfile = [path, '/', name, '.json'];
+        J = ReadJson(jsonfile);
+        
+        J = KeepModuleHistory(J, struct('files_in', files_in, 'files_out', files_out, 'opt', opt, 'ExecutionDate', datestr(datetime('now'))), mfilename);
+        
+        [path, name, ~] = fileparts(files_out.In1{i});
+        jsonfile = [path, '/', name, '.json'];
+        WriteJson(J, jsonfile)
+    end
     
 end
