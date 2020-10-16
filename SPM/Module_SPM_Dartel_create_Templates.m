@@ -157,7 +157,7 @@ if strcmp(files_out, '')
     for i = 1:size(UniqueTable,1)
         % if the current patient/timepoint contain all scans required -->
         % create an ouput scan/table
-        if isequal(sort(opt.Table_in.SequenceName((opt.Table_in.Patient == UniqueTable.Patient(i)) & (opt.Table_in.Tp == UniqueTable.Tp(i)))), sort(unique(opt.Table_in.SequenceName)))
+        if isequal(unique(sort(opt.Table_in.SequenceName((opt.Table_in.Patient == UniqueTable.Patient(i)) & (opt.Table_in.Tp == UniqueTable.Tp(i))))), sort(unique(opt.Table_in.SequenceName)))
             tmp_current_table_out = opt.Table_in(opt.Table_in.Patient == UniqueTable.Patient(i) & opt.Table_in.Tp == UniqueTable.Tp(i),:);
             % use the first scan as model
             tmp_current_table_out = tmp_current_table_out(1,:);
@@ -216,7 +216,9 @@ for  i = 1:numel(input_scans_name)
         % directory
         curent_Table = opt.Table_in(opt.Table_in.Patient == opt.Table_out.Patient(j) & opt.Table_in.Tp == opt.Table_out.Tp(j) & opt.Table_in.SequenceName == input_scans_name(i), :);
         curent_nii_filename = [char(curent_Table.Path) char(curent_Table.Filename) '.nii'];
-        copyfile(curent_nii_filename,  strrep(curent_nii_filename, '/Derived_data/', '/Tmp/'));
+        if ~strcmp(curent_nii_filename,  strrep(curent_nii_filename, '/Derived_data/', '/Tmp/'))
+            copyfile(curent_nii_filename,  strrep(curent_nii_filename, '/Derived_data/', '/Tmp/'));
+        end
         % save the inputs in a SPM format
         inputs{j} = [strrep(curent_nii_filename, '/Derived_data/', '/Tmp/'), ',1'];   
     end
@@ -241,9 +243,30 @@ slam = str2num(opt.Smoothing_Parameter);
 for i = 1:opt.Outer_iterations
     matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).its = its(i);
     matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).rparam =  rparam(i,:);
-    matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = K(i);
+    switch K(i)
+        case 1
+            matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = 0;
+        case 2
+            matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = 1;
+        case 4
+            matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = 2;
+        case 8
+            matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = 3;
+        case 16
+            matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = 4;
+        case 32
+            matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = 5;
+        case 64
+            matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = 6;
+        case    '128'
+            matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = 7;
+        case    '256'
+            matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = 8;
+        case    '512'
+            matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).K = 9;
+    end
     matlabbatch{1}.spm.tools.dartel.warp.settings.param(i).slam = slam(i);
-
+    
 end
 
 matlabbatch{1}.spm.tools.dartel.warp.settings.optim.lmreg = opt.LM_Regularisation;
@@ -251,19 +274,24 @@ matlabbatch{1}.spm.tools.dartel.warp.settings.optim.cyc = opt.Cycle;
 matlabbatch{1}.spm.tools.dartel.warp.settings.optim.its = opt.Iterations;
 
 
-% jobs = repmat(matlabbatch, 1, 1);
-% inputs = cell(0, 1);
-% for crun = 1:1
-% end
-% spm('defaults', 'FMRI');
-% spm_jobman('initcfg');
-% spm_jobman('run', jobs, inputs{:});
+jobs = repmat(matlabbatch, 1, 1);
+inputs = cell(0, 1);
+for crun = 1:1
+end
+spm('defaults', 'FMRI');
+spm_jobman('initcfg');
+tic
+spm_jobman('run', jobs, inputs{:});
+toc
 
 
 % rename output files in order to match to MP3 opt.Table_out
 for j=1:size(opt.Table_out,1)
     % copy the json of the first input
-    curent_Table = opt.Table_in(opt.Table_in.Patient == opt.Table_out.Patient(j) & opt.Table_in.Tp == opt.Table_out.Tp(j) & opt.Table_in.SequenceName == input_scans_name(i), :);
+    [path, name, ext] = fileparts(strrep(matlabbatch{1}.spm.tools.dartel.warp.images{1}{j}, ',1', ''));
+    curent_Table = opt.Table_in(opt.Table_in.Filename == name,:);
+
+    %curent_Table = opt.Table_in(opt.Table_in.Patient == opt.Table_out.Patient(j) & opt.Table_in.Tp == opt.Table_out.Tp(j) & opt.Table_in.SequenceName == input_scans_name(i), :);
     curent_json_filename = [char(curent_Table.Path) char(curent_Table.Filename) '.json'];
     new_jsonfile = [char(opt.Table_out.Path(j)) char(opt.Table_out.Filename(j)) '.json'];
 
@@ -275,14 +303,13 @@ for j=1:size(opt.Table_out,1)
     WriteJson(J, new_jsonfile)
     
     % rename the nii file
-    spm_filename = strrep(matlabbatch{1}.spm.tools.dartel.warp.images{1}{j}, '.nii,1', '.nii');
-    [path, name, ext] = fileparts(spm_filename);
+    %spm_filename = strrep(matlabbatch{1}.spm.tools.dartel.warp.images{1}{j}, '.nii,1', '.nii');
+   % [path, name, ext] = fileparts(spm_filename);
     movefile(fullfile(path, [opt.Flowfield_filename_prefix name '_' opt.output_template_Name ext]), files_out.In2{j})
        
 end
     
     
-
 
 
 
