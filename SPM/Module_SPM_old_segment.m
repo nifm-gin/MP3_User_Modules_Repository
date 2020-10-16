@@ -258,10 +258,20 @@ end
 
 % % First duplicate the reference image to the tmp folder and update the
 % files_in.In1 variable
+
 new_pathname = strcat(char(opt.Table_out.Path(1)),   char(opt.Table_in.Filename(1)), '.nii');
+% if this module is executed in a pipeline, is it possible that
+% files_in.In1{1} is already in the Tmp --> if so, we rename it
+if strcmp(files_in.In1{1}, new_pathname)
+    new_pathname = strrep(new_pathname, char(opt.Table_in.Filename(1)), [char(opt.Table_in.Filename(1)), '-bis']);
+    opt.Table_in.Filename(1) = categorical(cellstr([char(opt.Table_in.Filename(1)), '-bis']));
+    opt.Table_in.SequenceName(1) = categorical(cellstr([char(opt.Table_in.SequenceName(1)), '-bis']));
+end
+
 copyfile(files_in.In1{1},   new_pathname)
 copyfile(strrep(files_in.In1{1},'.nii','.json'),  strrep(new_pathname,'.nii','.json'))
 files_in.In1{1} = new_pathname;
+
 
 matlabbatch{1}.spm.tools.oldseg.data(1) = {[files_in.In1{1}, ',1']};
 switch opt.Ouput_grey_Matter_opt
@@ -463,13 +473,18 @@ if isfield(files_in, 'In4') && ~isempty(files_in.In4) && ~strcmp(opt.Ouput_csf_M
     end
 end
 
+if ~strcmp(fullfile(path, [char(opt.Table_in.Filename(1)), '_seg_inv_sn.mat']),    files_out.In4{1})
+    copyfile(fullfile(path, [char(opt.Table_in.Filename(1)), '_seg_inv_sn.mat']),  files_out.In4{1})
+    copyfile(fullfile(path, [char(opt.Table_in.Filename(1)), '_seg_sn.mat']),  files_out.In5{1})
+end
+
 % add json file to .mat files
 copyfile(strrep(files_in.In1{1},'.nii','.json'),  strrep(files_out.In4{1},'.mat','.json') )
 %% Json processing
 if isfile( strrep(files_out.In4{1},'.mat','.json'))
     J = ReadJson(strrep(files_out.In4{1},'.mat','.json'));
     J = KeepModuleHistory(J, struct('files_in', files_in, 'files_out', files_out, 'opt', opt, 'ExecutionDate', datestr(datetime('now'))), mfilename);
-    WriteJson(J, strrep(files_out.In4{1},'.nii','.json'))
+    WriteJson(J, strrep(files_out.In4{1},'.mat','.json'))
 end
 copyfile(strrep(files_out.In4{1},'.mat','.json'),  strrep(files_out.In5{1},'.mat','.json') )
 
