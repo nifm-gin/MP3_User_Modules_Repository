@@ -138,7 +138,8 @@ end
 % Patient_name / TimePoint / Scan_name / ROI_name /
 % Coordonate_x / Coordonate_y / Coordonate_z / Name_of_the_voxel
 cvs_table_template = table;
-
+% clean the variable name
+voxel_name = clean_variable_name(voxel_name, 0);
 
 %% load the ROIs one-by-one and create the corresponding table 
 % generate the ROI_table
