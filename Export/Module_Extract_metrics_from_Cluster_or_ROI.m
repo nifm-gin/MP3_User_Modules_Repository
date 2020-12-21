@@ -92,7 +92,7 @@ label_vol   = spm_vol(files_in.In1{1});
 label_map   = read_volume(label_vol,label_vol,0);
 label_list	= unique(label_map(:));
 label_list  = label_list(label_list ~= 0);
-
+label_list(isnan(label_list)) = [];
 % Extract parameters
 nb_maps     = length(files_in.In2);
 nb_rois     = length(label_list);
