@@ -320,7 +320,7 @@ elseif( ~isempty(regexpi(T1map_method,'\w*fair\w*')) &&...
         InvTimeRaw(2,:)=InvTimeGlo(first_scan:end);
     end
     % inter slice time
-    interSliceTime = 50; % ms
+    interSliceTime = 0; % ms
     fprintf('Interlice time correction by default equal to %ims\n',interSliceTime)
     
     % T1map calculation based on a non selective FAIR
@@ -336,6 +336,7 @@ elseif ( ~isempty(regexpi(T1map_method,'\w*fair\w*')) &&...
     InvTimeRaw = repmat(InvTimeRaw,NumFairMode,1);            % premiere ligne selective deuxieme nonselective si les deux mesures sont faites
     % inter slice time IS THIS CORRECT FOR RARE???
     interSliceTime = 0; % ms
+    fprintf('Interlice time correction by default equal to %ims\n',interSliceTime)
 end
 
 
