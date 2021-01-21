@@ -7,53 +7,53 @@ function [files_in,files_out,opt] = Module_T1map_MIT(files_in,files_out,opt)
 % _________________________________________________________________________
 % INPUTS:
 %
-% IN        
+% IN
 %   (string) a file name of a 3D+t fMRI dataset .
 %
 % OUT
 %   (structure) with the following fields:
 %       flag_test
 %   CORRECTED_DATA
-%       (string, default <BASE NAME FMRI>_c.<EXT>) File name for processed 
+%       (string, default <BASE NAME FMRI>_c.<EXT>) File name for processed
 %       data.
-%       If OUT is an empty string, the name of the outputs will be 
+%       If OUT is an empty string, the name of the outputs will be
 %       the same as the inputs, with a '_c' suffix added at the end.
 %
 %   MASK
-%       (string, default <BASE NAME FMRI>_mask.<EXT>) File name for a mask 
-%       of the data. If OUT is an empty string, the name of the 
-%       outputs will be the same as the inputs, with a '_mask' suffix added 
+%       (string, default <BASE NAME FMRI>_mask.<EXT>) File name for a mask
+%       of the data. If OUT is an empty string, the name of the
+%       outputs will be the same as the inputs, with a '_mask' suffix added
 %       at the end.
 %
-% OPT           
-%   (structure) with the following fields.  
+% OPT
+%   (structure) with the following fields.
 %
-%   TYPE_CORRECTION       
+%   TYPE_CORRECTION
 %      (string, default 'mean_var') possible values :
-%      'none' : no correction at all                       
+%      'none' : no correction at all
 %      'mean' : correction to zero mean.
 %      'mean_var' : correction to zero mean and unit variance
-%      'mean_var2' : same as 'mean_var' but slower, yet does not use as 
+%      'mean_var2' : same as 'mean_var' but slower, yet does not use as
 %      much memory).
 %
-%   FOLDER_OUT 
-%      (string, default: path of IN) If present, all default outputs 
-%      will be created in the folder FOLDER_OUT. The folder needs to be 
+%   FOLDER_OUT
+%      (string, default: path of IN) If present, all default outputs
+%      will be created in the folder FOLDER_OUT. The folder needs to be
 %      created beforehand.
 %
-%   FLAG_VERBOSE 
-%      (boolean, default 1) if the flag is 1, then the function prints 
+%   FLAG_VERBOSE
+%      (boolean, default 1) if the flag is 1, then the function prints
 %      some infos during the processing.
 %
-%   FLAG_TEST 
-%      (boolean, default 0) if FLAG_TEST equals 1, the brick does not do 
+%   FLAG_TEST
+%      (boolean, default 0) if FLAG_TEST equals 1, the brick does not do
 %      anything but update the default values in IN, OUT and OPT.
-%           
+%
 % _________________________________________________________________________
 % OUTPUTS:
 %
 % IN, OUT, OPT: same as inputs but updated with default values.
-%              
+%
 % _________________________________________________________________________
 % SEE ALSO:
 % NIAK_CORRECT_MEAN_VAR
@@ -88,12 +88,12 @@ function [files_in,files_out,opt] = Module_T1map_MIT(files_in,files_out,opt)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Initialization and syntax checks %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%% Initialize the module's parameters with default values 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Initialize the module's parameters with default values
 if isempty(opt)
-  
-     % define every option needed to run this module
-      %%   % define every option needed to run this module
+    
+    % define every option needed to run this module
+    %%   % define every option needed to run this module
     % --> module_option(1,:) = field names
     % --> module_option(2,:) = defaults values
     module_option(:,1)   = {'folder_out',''};
@@ -101,39 +101,45 @@ if isempty(opt)
     module_option(:,3)   = {'first_scan',1};
     module_option(:,4)   = {'M0_map','No'};
     module_option(:,5)   = {'IE_map','No'};
-    module_option(:,6)   = {'output_filename','T1Map'};
-    module_option(:,7)   = {'OutputSequenceName','AllName'};
-    module_option(:,8)   = {'RefInput',1};
-    module_option(:,9)   = {'InputToReshape',1};
-    module_option(:,10)   = {'Table_in', table()};
-    module_option(:,11)   = {'Table_out', table()};
+    module_option(:,6)   = {'T1_output_filename','T1Map'};
+    module_option(:,7)   = {'M0_output_filename','M0map'};
+    module_option(:,8)   = {'IE_output_filename','IEmap'};
+    module_option(:,9)   = {'OutputSequenceName','AllName'};
+    module_option(:,10)   = {'RefInput',1};
+    module_option(:,11)   = {'InputToReshape',1};
+    module_option(:,12)   = {'Table_in', table()};
+    module_option(:,13)   = {'Table_out', table()};
     opt.Module_settings = psom_struct_defaults(struct(),module_option(1,:),module_option(2,:));
     
-% list of everything displayed to the user associated to their 'type'
-     % --> user_parameter(1,:) = user_parameter_list
-     % --> user_parameter(2,:) = user_parameter_type
-     % --> user_parameter(3,:) = parameter_default
-     % --> user_parameter(4,:) = psom_parameter_list
-     % --> user_parameter(5,:) = Scans_Input_DOF (degree-of-freedom)
-     % --> user_parameter(6,:) = Help : text data which describe the parameter (it
-     % will be display to help the user)
-     user_parameter(:,1)   = {'Description','Text','','','','',...
+    % list of everything displayed to the user associated to their 'type'
+    % --> user_parameter(1,:) = user_parameter_list
+    % --> user_parameter(2,:) = user_parameter_type
+    % --> user_parameter(3,:) = parameter_default
+    % --> user_parameter(4,:) = psom_parameter_list
+    % --> user_parameter(5,:) = Scans_Input_DOF (degree-of-freedom)
+    % --> user_parameter(6,:) = Help : text data which describe the parameter (it
+    % will be display to help the user)
+    user_parameter(:,1)   = {'Description','Text','','','','',...
         {'Generate a T1map from a Multi-Inversion Time scan'}'};
-user_parameter(:,2)   = {'Select a MTI_T1 scan as input','1Scan','','',{'SequenceName'}, 'Mandatory',''};
-user_parameter(:,3)   = {'Parameters','','','','', '',''};
-user_parameter(:,4)   = {'   .Output filename','char','T1Map','output_filename','','',...
-    {'Specify the name of the T1map generated'
-    'Default filename is ''T1map''.'}'};
-user_parameter(:,5)   = {'   .First Scan','numeric','1','first_scan','', '','Please, select the first dynamic to use; by default the all dynamic is used'};
-user_parameter(:,6)   = {'   .M0 map ?','cell',{'Yes', 'No'},'M0_map','', '',''};
-user_parameter(:,7)   = {'   .IE map ?','cell',{'Yes', 'No'},'IE_map','', '',''};
-
-
-VariableNames = {'Names_Display', 'Type', 'Default', 'PSOM_Fields', 'Scans_Input_DOF', 'IsInputMandatoryOrOptional','Help'};
-opt.table = table(user_parameter(1,:)', user_parameter(2,:)', user_parameter(3,:)', user_parameter(4,:)', user_parameter(5,:)', user_parameter(6,:)',user_parameter(7,:)', 'VariableNames', VariableNames);
-
-% So far no input file is selected and therefore no output
-%
+    user_parameter(:,2)   = {'Select a MTI_T1 scan as input','1Scan','','',{'SequenceName'}, 'Mandatory',''};
+    user_parameter(:,3)   = {'Parameters','','','','', '',''};
+    user_parameter(:,4)   = {'   .Output filename','char','T1Map','T1_output_filename','','',...
+        {'Specify the name of the T1map generated'
+        'Default filename is ''T1map''.'}'};
+    user_parameter(:,5)   = {'   .First Scan','numeric','1','first_scan','', '','Please, select the first dynamic to use; by default the all dynamic is used'};
+    user_parameter(:,6)   = {'   .Save the M0 map ?','cell',{'Yes', 'No'},'M0_map','', '',''};
+    user_parameter(:,7)  =  {'       .M0 Filename ','char','','M0_output_filename','','',...
+        'Specify the name of the M0 map'};
+    user_parameter(:,8)   = {'   .IE map ?','cell',{'Yes', 'No'},'IE_map','', '',''};
+    user_parameter(:,9)  =  {'       .IE Filename ','char','','IE_output_filename','','',...
+        'Specify the name of the IE map'};
+    
+    
+    VariableNames = {'Names_Display', 'Type', 'Default', 'PSOM_Fields', 'Scans_Input_DOF', 'IsInputMandatoryOrOptional','Help'};
+    opt.table = table(user_parameter(1,:)', user_parameter(2,:)', user_parameter(3,:)', user_parameter(4,:)', user_parameter(5,:)', user_parameter(6,:)',user_parameter(7,:)', 'VariableNames', VariableNames);
+    
+    % So far no input file is selected and therefore no output
+    %
     % The output file will be generated automatically when the input file
     % will be selected by the user
     opt.NameOutFiles = {'ASL_InvEff'};
@@ -141,7 +147,7 @@ opt.table = table(user_parameter(1,:)', user_parameter(2,:)', user_parameter(3,:
     files_in.In1 = {''};
     files_out.In1 = {''};
     return
-  
+    
 end
 %%%%%%%%
 % debug
@@ -149,21 +155,40 @@ if isfield(opt, 'output_filename_ext')
     opt.output_filename = opt.output_filename_ext;
 end
 
-opt.NameOutFiles = {opt.output_filename};
+opt.NameOutFiles = {opt.T1_output_filename};
 
 
 if isempty(files_out)
     opt.Table_out = opt.Table_in;
-    opt.Table_out.IsRaw = categorical(0);   
+    opt.Table_out.IsRaw = categorical(0);
     opt.Table_out.Path = categorical(cellstr([opt.folder_out, filesep]));
     if strcmp(opt.OutputSequenceName, 'AllName')
-        opt.Table_out.SequenceName = categorical(cellstr(opt.output_filename));
+        opt.Table_out.SequenceName = categorical(cellstr(opt.T1_output_filename));
     elseif strcmp(opt.OutputSequenceName, 'Extension')
-        opt.Table_out.SequenceName = categorical(cellstr([char(opt.Table_out.SequenceName), opt.output_filename]));
+        opt.Table_out.SequenceName = categorical(cellstr([char(opt.Table_out.SequenceName), opt.T1_output_filename]));
     end
     opt.Table_out.Filename = categorical(cellstr([char(opt.Table_out.Patient), '_', char(opt.Table_out.Tp), '_', char(opt.Table_out.SequenceName)]));
     f_out = [char(opt.Table_out.Path), char(opt.Table_out.Patient), '_', char(opt.Table_out.Tp), '_', char(opt.Table_out.SequenceName), '.nii'];
     files_out.In1{1} = f_out;
+    
+    if strcmp(opt.M0_map, 'Yes')
+        tmp = opt.Table_out(1,:);
+        tmp.SequenceName = categorical(cellstr(opt.M0_output_filename));
+        tmp.Filename = categorical(cellstr([char(tmp.Patient), '_', char(tmp.Tp), '_', char(tmp.SequenceName)]));
+        f_out = [char(tmp.Path), char(tmp.Patient), '_', char(tmp.Tp), '_', char(tmp.SequenceName), '.nii'];
+        files_out.In2{1} = f_out;
+        opt.Table_out = [opt.Table_out; tmp];
+    end
+    
+    if strcmp(opt.IE_map, 'Yes')
+        tmp = opt.Table_out(1,:);
+        tmp.SequenceName = categorical(cellstr(opt.IE_output_filename));
+        tmp.Filename = categorical(cellstr([char(tmp.Patient), '_', char(tmp.Tp), '_', char(tmp.SequenceName)]));
+        f_out = [char(tmp.Path), char(tmp.Patient), '_', char(tmp.Tp), '_', char(tmp.SequenceName), '.nii'];
+        files_out.In3{1} = f_out;
+        opt.Table_out = [opt.Table_out; tmp];
+    end
+    
 end
 
 %% Syntax
@@ -172,13 +197,13 @@ if ~exist('files_in','var')||~exist('files_out','var')||~exist('opt','var')
 end
 
 %% Inputs
-if ~ischar(files_in.In1{1}) 
+if ~ischar(files_in.In1{1})
     error('files in should be a char');
 end
 
 [path_nii,name_nii,ext_nii] = fileparts(char(files_in.In1{1}));
 if ~strcmp(ext_nii, '.nii')
-     error('First file need to be a .nii');  
+    error('First file need to be a .nii');
 end
 
 
@@ -193,11 +218,11 @@ end
 
 %% Building default output names
 if strcmp(opt.folder_out,'') % if the output folder is left empty, use the same folder as the input
-    opt.folder_out = path_nii;    
+    opt.folder_out = path_nii;
 end
 
 if isempty(files_out)
-   files_out.In1 = {cat(2,opt.folder_out,filesep,name_nii,'_',opt.output_filename,ext_nii)};
+    files_out.In1 = {cat(2,opt.folder_out,filesep,name_nii,'_',opt.T1_output_filename,ext_nii)};
 end
 
 %% If the test flag is true, stop here !
@@ -205,13 +230,10 @@ if opt.flag_test == 1
     return
 end
 
-
-
 [Status, Message, Wrong_File] = Check_files(files_in);
 if ~Status
     error('Problem with the input file : %s \n%s', Wrong_File, Message)
 end
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -227,14 +249,10 @@ info = niftiinfo(files_in.In1{1});
 %% load input JSON file
 J = spm_jsonread(strrep(files_in.In1{1}, '.nii', '.json'));
 
-
-
-
 % retieve calculation parameter
 first_scan=opt.first_scan;
 M0mapYN=opt.M0_map;
 IEmapYN=opt.IE_map;
-%error('Sorry this module isn''t coded for the moment')
 
 
 %% retreive FAIR method
@@ -304,71 +322,80 @@ elseif( ~isempty(regexpi(T1map_method,'\w*fair\w*')) &&...
     % inter slice time
     interSliceTime = 50; % ms
     fprintf('Correction temps interslice par defaut egale a %ims\n',interSliceTime)
+    
+    % T1map calculation based on a non selective FAIR
+elseif ( ~isempty(regexpi(T1map_method,'\w*fair\w*')) &&...
+        ~isempty(regexpi(T1map_method,'\w*rare\w*')) )
+    % inversion time
+    if isfield(J,'FairTIRArr')
+        FairTIR_Arr = J.FairTIRArr.value.';
+    elseif isfield(J,'FairTIRArrPVM')
+        FairTIR_Arr = J.FairTIRArrPVM.value.';
+    end
+    InvTimeRaw = FairTIR_Arr(first_scan:end);   % liste  des temps inversion pour la methode fair
+    InvTimeRaw = repmat(InvTimeRaw,NumFairMode,1);            % premiere ligne selective deuxieme nonselective si les deux mesures sont faites
+    % inter slice time IS THIS CORRECT FOR RARE???
+    interSliceTime = 50; % ms
 end
 
-%% Init variable
 
-% T1map.acq=data.acq;
-% T1map.filename=data.filename;
-% T1map.texte=data.texte;
-% if strcmp(M0mapYN,'Yes')
-%     M0map.acq=data.acq;
-%     M0map.filename=data.filename;
-%     M0map.texte=data.texte;
-% end
-% if strcmp(IEmapYN,'Yes')
-%     IEmap.acq=data.acq;
-%     IEmap.filename=data.filename;
-%     IEmap.texte=data.texte;
-% end
+% to allow single slice datasets to be processed
+if size(size(N),2) > 3
+    numberOfSlices = size(N,3); % To be checked on 4D or 5D datasets
+else %single slice dataset
+    numberOfSlices = 1;
+end
+
+
 if(NumFairMode==1)
     data_in_vector = reshape(N, [size(N,1)*size(N,2),...
         size(N,3), size(N,4)]);
 elseif(NumFairMode==2)
-    data_in_vector = reshape(N, [size(N,1)*size(N,2),...
-        size(N,3), size(N,4)/NumFairMode,NumFairMode]);
-    data_in_vector(:,:,1,:) = reshape(N(:,:,:,:,NumFairMode*first_scan-1:NumFairMode:end), [size(N,1)*size(N,2),...
-        size(N,3), size(N,4)/NumFairMode]);
-    data_in_vector(:,:,2,:) = reshape(N(:,:,:,:,NumFairMode*first_scan:NumFairMode:end), [size(N,1)*size(N,2),...
-        size(N,3), size(N,4)/NumFairMode]);
+    data_in_vector = permute(reshape(N, [size(N,1)*size(N,2),...
+        size(N,3),NumFairMode, size(N,5)]), [1 2 4 3]);
 end
-fit_T1_result = NaN(size(data_in_vector,1),size(data_in_vector,2),NumFairMode);
-fit_T1_err= NaN(size(data_in_vector,1),size(data_in_vector,2),NumFairMode);
-if strcmp(M0mapYN,'Yes')
-    fit_M0_result = NaN(size(data_in_vector,1),size(data_in_vector,2),NumFairMode);
-    fit_M0_err = NaN(size(data_in_vector,1),size(data_in_vector,2),NumFairMode);
-end
-if strcmp(IEmapYN,'Yes')
-    fit_IE_result = NaN(size(data_in_vector,1),size(data_in_vector,2),NumFairMode);
-    fit_IE_err = NaN(size(data_in_vector,1),size(data_in_vector,2),NumFairMode);
+
+% 2 cases bases on single slice or multislices
+if numberOfSlices >1
+    fit_T1_result = NaN(size(data_in_vector,1),size(data_in_vector,2),NumFairMode);
+    if strcmp(M0mapYN,'Yes')
+        fit_M0_result = NaN(size(data_in_vector,1),size(data_in_vector,2),NumFairMode);
+        fit_M0_err = NaN(size(data_in_vector,1),size(data_in_vector,2),NumFairMode);
+    end
+    if strcmp(IEmapYN,'Yes')
+        fit_IE_result = NaN(size(data_in_vector,1),size(data_in_vector,2),NumFairMode);
+    end
+else
+    fit_T1_result = NaN(size(data_in_vector,1),NumFairMode);
+    if strcmp(M0mapYN,'Yes')
+        fit_M0_result = NaN(size(data_in_vector,1),NumFairMode);
+    end
+    if strcmp(IEmapYN,'Yes')
+        fit_IE_result = NaN(size(data_in_vector,1),NumFairMode);
+    end
 end
 
 %% Fitting
+
 for it_mode = 1 : NumFairMode
-    for it_slice = 1 : size(N,3)
+    for it_slice = 1 : numberOfSlices
         data_in_vectorTemp = squeeze(data_in_vector(:,it_slice,:,it_mode));
-        %     indT1 = find((data_in_vector(:,it_slice,1) ~= 0) & (isnan(data_in_vector(:,it_slice,1)) ~= 1));
-        %     data_in_vectorTemp = squeeze(data_in_vector(indT1,it_slice,:));
         NumSlice = find(PVM_ObjOrderList==it_slice-1)-1;
         
         % retrieve parameters
         echotime_used = InvTimeRaw(it_mode,:) + NumSlice * interSliceTime;
         
-        %         for voxel_nbr=1:size(data_in_vectorTemp,1)
         for voxel_nbr=1:size(data_in_vectorTemp,1)
             if sum(isnan(data_in_vectorTemp(voxel_nbr,:))) ~= length(data_in_vectorTemp(voxel_nbr,:))
                 [~,voxel_min_nbr]=min(data_in_vectorTemp(voxel_nbr,:));
-                [aaa, bbb,  ccc]=levenbergmarquardt('fit_T1_3param',echotime_used,data_in_vectorTemp(voxel_nbr,:),[echotime_used(voxel_min_nbr)/0.693*1.2 max(data_in_vectorTemp(voxel_nbr,:)) 1]);
+                [aaa, ~,  ccc]=levenbergmarquardt('fit_T1_3param',echotime_used,data_in_vectorTemp(voxel_nbr,:),[echotime_used(voxel_min_nbr)/0.693*1.2 max(data_in_vectorTemp(voxel_nbr,:)) 1]);
                 if aaa(1)>0 & aaa(2)>0 & imag(aaa)==0 & ccc==-1 %#ok<AND2>
                     fit_T1_result(voxel_nbr,it_slice,it_mode)=aaa(1);
-                    fit_T1_err(voxel_nbr,it_slice,it_mode)=bbb(1);
                     if strcmp(M0mapYN,'Yes')
                         fit_M0_result(voxel_nbr,it_slice,it_mode)=aaa(2);
-                        fit_M0_err(voxel_nbr,it_slice,it_mode)=bbb(2);
                     end
                     if strcmp(IEmapYN,'Yes')
                         fit_IE_result(voxel_nbr,it_slice,it_mode)=aaa(3);
-                        fit_IE_err(voxel_nbr,it_slice,it_mode)=bbb(3);                        
                     end
                 end
             end
@@ -378,9 +405,15 @@ for it_mode = 1 : NumFairMode
 end
 
 %% reshape and formatting of data
-%tmp=reshape(fit_T1_result,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
-tmp=reshape(fit_T1_result,[size(N,1),size(N,2),size(N,3),NumFairMode]);
-T1map = tmp;
+T1map=reshape(fit_T1_result,[size(N,1),size(N,2),numberOfSlices ,NumFairMode]); %
+
+if strcmp(M0mapYN,'Yes')
+    M0map=reshape(fit_M0_result,[size(N,1),size(N,2),numberOfSlices ,NumFairMode]); % LH20210120
+end
+if strcmp(IEmapYN,'Yes')
+    IEmap=reshape(fit_IE_result,[size(N,1),size(N,2),numberOfSlices ,NumFairMode]); % LH20210120
+end
+
 %T1map.reco.data=permute(tmp, [1 2 4 3]);
 % correction Kober 2004 on apparent T1
 if ( ~isempty(regexpi(T1map_method,'\w*fair\w*')) &&...
@@ -388,195 +421,11 @@ if ( ~isempty(regexpi(T1map_method,'\w*fair\w*')) &&...
         ~isempty(regexpi(T1map_method,'\w*fisp\w*')) ) )
     PVM_ExcPulseAngle=scan_acqp('##$PVM_ExcPulseAngle=',data.texte,1);
     Seg_time=scan_acqp('##$Seg_time=',data.texte,1);
-%    T1map.reco.data = T1map.reco.data ./ ( 1 + T1map.reco.data * log( cos( PVM_ExcPulseAngle * pi / 180 ) ) / Seg_time );
+    %    T1map.reco.data = T1map.reco.data ./ ( 1 + T1map.reco.data * log( cos( PVM_ExcPulseAngle * pi / 180 ) ) / Seg_time );
 end
-%tmp=reshape(fit_T1_err,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
-tmp=reshape(fit_T1_err,[size(N,1),size(N,2),size(N,3),NumFairMode]);
-%T1map.reco.err=permute(tmp, [1 2 4 3]);
-% if strcmp(M0mapYN,'Yes')
-%     tmp=reshape(fit_M0_result,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
-%     M0map.reco.data=permute(tmp, [1 2 4 3]);
-%     tmp=reshape(fit_M0_err,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
-%     M0map.reco.err=permute(tmp, [1 2 4 3]);
-% end
-% if strcmp(IEmapYN,'Yes')
-%     tmp=reshape(fit_IE_result,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
-%     IEmap.reco.data=permute(tmp, [1 2 4 3]);
-%     tmp=reshape(fit_IE_err,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
-%     IEmap.reco.err=permute(tmp, [1 2 4 3]);
-% end
-% 
-% %% T1 map formating
-% T1map.reco.echo_label(1,1) = {'fit_T1'};
-% T1map.reco.unit(1,1) = {'ms'};
-% if(NumFairMode==2)
-%     T1map.reco.echo_label(1,1) = {'fit_T1 selective'};
-%     T1map.reco.echo_label(1,2) = {'fit_T1 non selective'};
-%     T1map.reco.unit(1,2) = {'ms'};
-% end
-% T1map.reco.texte = 'T1map';
-% T1map.reco.date = date;
-% T1map.reco.no_echoes = size(T1map.reco.echo_label,2);
-% T1map.reco.no_expts  = size(T1map.reco.data,5);
-% T1map.reco.no_slices = T1map.acq.no_slices;
-% T1map.reco.globalmin=min(T1map.reco.data(:));
-% T1map.reco.globalmax=max(T1map.reco.data(:));
-% for m_expt=1:T1map.reco.no_expts,
-%     for m_slice=1:T1map.reco.no_slices,
-%         for m_echo=1:T1map.reco.no_echoes
-%             T1map.reco.fov_offsets(:,m_echo,m_slice,m_expt) = data.reco.fov_offsets(:,1,m_slice,m_expt);
-%             T1map.reco.fov_orientation(:,m_echo,m_slice,m_expt) = data.reco.fov_orientation(:,1,m_slice,m_expt);
-%             T1map.reco.label(m_echo,m_slice,m_expt) = data.reco.label(1,m_slice,m_expt);
-%             T1map.reco.phaselabel(m_echo,m_slice,m_expt) = data.reco.phaselabel(1,m_slice,m_expt);
-%             T1map.reco.fov_phase_orientation(m_echo,m_slice,m_expt) = data.reco.fov_phase_orientation(1,m_slice,m_expt);
-%             T1map.reco.scaling_factor(m_echo,m_slice,m_expt) = 1;
-%             T1map.reco.scaling_offset(m_echo,m_slice,m_expt) = 0;
-%         end
-%     end
-% end
-% T1map.reco = orderfields(T1map.reco);
-% 
-% T1map.reco.displayedecho=T1map.reco.no_echoes;
-% T1map.reco.displayedslice=data.reco.displayedslice;
-% T1map.reco.displayedexpt=1;
-% T1map.reco.thickness=data.reco.thickness;
-% T1map.reco.no_views=data.reco.no_views;
-% T1map.reco.no_samples=data.reco.no_samples;
-% T1map.reco.angAP=data.reco.angAP;
-% T1map.reco.angFH=data.reco.angFH;
-% T1map.reco.angRL=data.reco.angRL;
-% T1map.reco.angulation=data.reco.angulation;
-% T1map.reco.bitpix=data.reco.bitpix;
-% T1map.reco.fov=data.reco.fov;
-% 
-% ParamConfig=sprintf('##$QuantifMethod=levenbergmarquardt with function AB_expt1_v1.m\n##$First scan used=%s\n##$Raw scan used=%s\n##$interSliceTime=%0.2f\n##END=',...
-%     add_parameters{:}{1},...
-%     MTI_map_filename,...
-%     interSliceTime);
-% T1map.reco.paramQuantif = ParamConfig;
-% T1map.reco=orderfields(T1map.reco);
-% 
-% T1map.scan_number = 104;
-% T1map.reco_number = 1;
-% T1map.clip=[0 3500 1];
-% 
-% %% M0 map formating
-% if strcmp(M0mapYN,'Yes')
-%     M0map.reco.echo_label(1,1) = {'fit_M0'};
-%     M0map.reco.unit(1,1) = {'ms'};
-%     if(NumFairMode==2)
-%         M0map.reco.echo_label(1,1) = {'fit_M0 selective'};
-%         M0map.reco.echo_label(1,2) = {'fit_M0 non selective'};
-%         M0map.reco.unit(1,2) = {'a.u.'};
-%     end
-%     M0map.reco.texte = 'M0map';
-%     M0map.reco.date = date;
-%     M0map.reco.no_echoes = size(M0map.reco.echo_label,2);
-%     M0map.reco.no_expts  = size(M0map.reco.data,5);
-%     M0map.reco.no_slices = M0map.acq.no_slices;
-%     M0map.reco.globalmin=min(M0map.reco.data(:));
-%     M0map.reco.globalmax=max(M0map.reco.data(:));
-%     for m_expt=1:M0map.reco.no_expts,
-%         for m_slice=1:M0map.reco.no_slices,
-%             for m_echo=1:M0map.reco.no_echoes
-%                 M0map.reco.fov_offsets(:,m_echo,m_slice,m_expt) = data.reco.fov_offsets(:,1,m_slice,m_expt);
-%                 M0map.reco.fov_orientation(:,m_echo,m_slice,m_expt) = data.reco.fov_orientation(:,1,m_slice,m_expt);
-%                 M0map.reco.label(m_echo,m_slice,m_expt) = data.reco.label(1,m_slice,m_expt);
-%                 M0map.reco.phaselabel(m_echo,m_slice,m_expt) = data.reco.phaselabel(1,m_slice,m_expt);
-%                 M0map.reco.fov_phase_orientation(m_echo,m_slice,m_expt) = data.reco.fov_phase_orientation(1,m_slice,m_expt);
-%                 M0map.reco.scaling_factor(m_echo,m_slice,m_expt) = 1;
-%                 M0map.reco.scaling_offset(m_echo,m_slice,m_expt) = 0;
-%             end
-%         end
-%     end
-%     M0map.reco = orderfields(M0map.reco);
-%     
-%     M0map.reco.displayedecho=M0map.reco.no_echoes;
-%     M0map.reco.displayedslice=M0map.reco.no_slices;
-%     M0map.reco.displayedexpt=1;
-%     M0map.reco.thickness=data.reco.thickness;
-%     M0map.reco.no_views=data.reco.no_views;
-%     M0map.reco.no_samples=data.reco.no_samples;
-%     M0map.reco.angAP=data.reco.angAP;
-%     M0map.reco.angFH=data.reco.angFH;
-%     M0map.reco.angRL=data.reco.angRL;
-%     M0map.reco.angulation=data.reco.angulation;
-%     M0map.reco.bitpix=data.reco.bitpix;
-%     M0map.reco.fov=data.reco.fov;
-%     
-%     
-%     M0map.reco.paramQuantif = ParamConfig;
-%     M0map.reco=orderfields(M0map.reco);
-%     
-%     M0map.scan_number = 105;
-%     M0map.reco_number = 1;
-% end
-% 
-% %% IE map formating
-% if strcmp(IEmapYN,'Yes')
-%     IEmap.reco.echo_label(1,1) = {'fit_IE'};
-%     IEmap.reco.unit(1,1) = {'ms'};
-%     if(NumFairMode==2)
-%         IEmap.reco.echo_label(1,1) = {'fit_IE selective'};
-%         IEmap.reco.echo_label(1,2) = {'fit_IE non selective'};
-%         IEmap.reco.unit(1,2) = {'a.u.'};
-%     end
-%     IEmap.reco.texte = 'IEmap';
-%     IEmap.reco.date = date;
-%     IEmap.reco.no_echoes = size(IEmap.reco.echo_label,2);
-%     IEmap.reco.no_expts  = size(IEmap.reco.data,5);
-%     IEmap.reco.no_slices = IEmap.acq.no_slices;
-%     IEmap.reco.globalmin=min(IEmap.reco.data(:));
-%     IEmap.reco.globalmax=max(IEmap.reco.data(:));
-%     for m_expt=1:IEmap.reco.no_expts,
-%         for m_slice=1:IEmap.reco.no_slices,
-%             for m_echo=1:IEmap.reco.no_echoes
-%                 IEmap.reco.fov_offsets(:,m_echo,m_slice,m_expt) = data.reco.fov_offsets(:,1,m_slice,m_expt);
-%                 IEmap.reco.fov_orientation(:,m_echo,m_slice,m_expt) = data.reco.fov_orientation(:,1,m_slice,m_expt);
-%                 IEmap.reco.label(m_echo,m_slice,m_expt) = data.reco.label(1,m_slice,m_expt);
-%                 IEmap.reco.phaselabel(m_echo,m_slice,m_expt) = data.reco.phaselabel(1,m_slice,m_expt);
-%                 IEmap.reco.fov_phase_orientation(m_echo,m_slice,m_expt) = data.reco.fov_phase_orientation(1,m_slice,m_expt);
-%                 IEmap.reco.scaling_factor(m_echo,m_slice,m_expt) = 1;
-%                 IEmap.reco.scaling_offset(m_echo,m_slice,m_expt) = 0;
-%             end
-%         end
-%     end
-%     IEmap.reco = orderfields(IEmap.reco);
-%     
-%     IEmap.reco.displayedecho=IEmap.reco.no_echoes;
-%     IEmap.reco.displayedslice=IEmap.reco.no_slices;
-%     IEmap.reco.displayedexpt=1;
-%     IEmap.reco.thickness=data.reco.thickness;
-%     IEmap.reco.no_views=data.reco.no_views;
-%     IEmap.reco.no_samples=data.reco.no_samples;
-%     IEmap.reco.angAP=data.reco.angAP;
-%     IEmap.reco.angFH=data.reco.angFH;
-%     IEmap.reco.angRL=data.reco.angRL;
-%     IEmap.reco.angulation=data.reco.angulation;
-%     IEmap.reco.bitpix=data.reco.bitpix;
-%     IEmap.reco.fov=data.reco.fov;
-%     IEmap.reco.paramQuantif = ParamConfig;
-%     IEmap.reco=orderfields(IEmap.reco);
-%     
-%     IEmap.scan_number = 105;
-%     IEmap.reco_number = 1;
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
 
 
 OutputImages = T1map;
-
 
 % save the new files (.nii & .json)
 % update the header before saving the new .nii
@@ -585,32 +434,83 @@ info2.Filename = files_out.In1{1};
 info2.Filemoddate = char(datetime('now'));
 info2.Datatype = class(OutputImages);
 info2.PixelDimensions = info.PixelDimensions(1:length(size(OutputImages)));
-%info2.PixelDimensions = [info.PixelDimensions, 0];
 info2.ImageSize = size(OutputImages);
-info2.Description = [info.Description, 'Modified by ASL_InvEff Module'];
+info2.Description = [info.Description, 'Modified by Module_T1map_MIT Module'];
 
 OutputImages(OutputImages < 0) = NaN;
-OutputImages(OutputImages > 3500) = NaN;
-% AUC(AUC > 5000) = -1;
-% AUC(isnan(AUC)) = -1;
+OutputImages(OutputImages > 8000) = NaN;
+
 
 % save the new .nii file
 niftiwrite(OutputImages, files_out.In1{1}, info2);
 
-% % so far copy the .json file of the first input
-% copyfile(strrep(files_in.In1{1}, '.nii', '.json'), strrep(files_out.In1{1}, '.nii', '.json'))
 
 %% Json Processing
 [path, name, ~] = fileparts(files_in.In1{1});
 jsonfile = [path, '/', name, '.json'];
 J = ReadJson(jsonfile);
-
-J = KeepModuleHistory(J, struct('files_in', files_in, 'files_out', files_out, 'opt', opt, 'ExecutionDate', datestr(datetime('now'))), mfilename); 
+J = KeepModuleHistory(J, struct('files_in', files_in, 'files_out', files_out, 'opt', opt, 'ExecutionDate', datestr(datetime('now'))), mfilename);
 
 [path, name, ~] = fileparts(files_out.In1{1});
 jsonfile = [path, '/', name, '.json'];
 WriteJson(J, jsonfile)
 
+% ESSAI PAS CONCLUANT - LH20210120 added for M0 and IE output
+if strcmp(M0mapYN,'Yes')
+    OutputImages = M0map;
+    % save the new files (.nii & .json)
+    % update the header before saving the new .nii
+    info2 = info;
+    info2.Filename = files_out.In2{1};
+    info2.Filemoddate = char(datetime('now'));
+    info2.Datatype = class(OutputImages);
+    info2.PixelDimensions = info.PixelDimensions(1:length(size(OutputImages)));
+    info2.ImageSize = size(OutputImages);
+    info2.Description = [info.Description, 'Modified by Module_T1map_MIT Module'];
+    
+    % save the new .nii file
+    niftiwrite(OutputImages, files_out.In2{1}, info2);
+    
+    
+    %% Json Processing
+    [path, name, ~] = fileparts(files_in.In1{1});
+    jsonfile = [path, '/', name, '.json'];
+    J = ReadJson(jsonfile);
+    J = KeepModuleHistory(J, struct('files_in', files_in, 'files_out', files_out, 'opt', opt, 'ExecutionDate', datestr(datetime('now'))), mfilename);
+    
+    [path, name, ~] = fileparts(files_out.In2{1});
+    jsonfile = [path, '/', name, '.json'];
+    WriteJson(J, jsonfile)
+    
+end
+if strcmp(IEmapYN,'Yes')
+    OutputImages = IEmap;
+    % save the new files (.nii & .json)
+    % update the header before saving the new .nii
+    info2 = info;
+    info2.Filename = files_out.In3{1};
+    info2.Filemoddate = char(datetime('now'));
+    info2.Datatype = class(OutputImages);
+    info2.PixelDimensions = info.PixelDimensions(1:length(size(OutputImages)));
+    info2.ImageSize = size(OutputImages);
+    info2.Description = [info.Description, 'Modified by Module_T1map_MIT Module'];
+    
+    % save the new .nii file
+    niftiwrite(OutputImages, files_out.In3{1}, info2);
+    
+    
+    %% Json Processing
+    [path, name, ~] = fileparts(files_in.In1{1});
+    jsonfile = [path, '/', name, '.json'];
+    J = ReadJson(jsonfile);
+    J = KeepModuleHistory(J, struct('files_in', files_in, 'files_out', files_out, 'opt', opt, 'ExecutionDate', datestr(datetime('now'))), mfilename);
+    
+    [path, name, ~] = fileparts(files_out.In3{1});
+    jsonfile = [path, '/', name, '.json'];
+    WriteJson(J, jsonfile)
+end
+% LH20210120 added for M0 and IE output
 
-% 
+
+%
 end
