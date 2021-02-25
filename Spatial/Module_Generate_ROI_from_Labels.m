@@ -203,7 +203,7 @@ if isempty(Labels_to_keeps)
     Output(N>0)=1;
 else
     new_value = 1234567;
-    tmp = changem(N,repmat(new_value, size(Labels_to_keeps)),Labels_to_keeps);
+    tmp = substitute_value_in_data_array(N,repmat(new_value, size(Labels_to_keeps)),Labels_to_keeps);
     Output(tmp==new_value) = 1;
 end
 
