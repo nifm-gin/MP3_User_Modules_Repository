@@ -165,7 +165,7 @@ end
 
 %% Syntax
 if ~exist('files_in','var')||~exist('files_out','var')||~exist('opt','var')
-    error('Smoothing:module','Bad syntax, type ''help %s'' for more info.',mfilename)
+    error('Module_ExtractROI:module','Bad syntax, type ''help %s'' for more info.',mfilename)
 end
 
 
