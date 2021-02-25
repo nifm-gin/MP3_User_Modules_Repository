@@ -198,11 +198,15 @@ info = niftiinfo(files_in.In1{1});
 
 Labels_to_keeps = str2num(opt.Labels_to_keeps);
 %% Process your data
-new_value = 1234567;
-tmp = changem(N,repmat(new_value, size(Labels_to_keeps)),Labels_to_keeps);
-
 Output =single(zeros(size(N)));
-Output(tmp==new_value) = 1;
+if isempty(Labels_to_keeps)
+    Output(N>0)=1;
+else
+    new_value = 1234567;
+    tmp = changem(N,repmat(new_value, size(Labels_to_keeps)),Labels_to_keeps);
+    Output(tmp==new_value) = 1;
+end
+
 
 % Get the output header
 info2 = info;
