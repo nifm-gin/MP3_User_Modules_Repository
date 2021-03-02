@@ -27,7 +27,7 @@ if isempty(opt)
     
     module_parameters(:,1)   = {'output_filename_ext','_Extracted'};
     module_parameters(:,2)   = {'OutputSequenceName','Extension'};
-    module_parameters(:,3)   = {'EqOrDiff','Equal'};
+    module_parameters(:,3)   = {'Operator','Equal'};
     module_parameters(:,4)   = {'X','1'};
     
     
@@ -118,13 +118,14 @@ if isempty(opt)
     
     user_parameter(:,1)   = {'Description','Text','','','','',...
         {
-        'This module create a ROI with all the voxels whose value is equal (or different) to X.'
+        'This module create an ROI with all the voxels whose value is equal (or different) to X.'
+        'This module can be exectuted using 1 scan or 1 ROI'
         }'};
-    user_parameter(:,2)   = {'Select one scan as input','1Scan','','',{'SequenceName'}, 'Mandatory',''};
+    user_parameter(:,2)   = {'Select one scan as input','1ScanOr1ROI','','',{'SequenceName'}, 'Mandatory','Please select one scan OR one ROI'};
     user_parameter(:,3)   = {'Parameters','','','','', '', ''};
     user_parameter(:,4)   = {'   .Output filename extension','char','','output_filename_ext','', '',''};
     user_parameter(:,5)   = {'   .Value of X :','numeric','','X','', '',''};
-    user_parameter(:,6)   = {'   .Equal or Different ?','cell',{'Equal', 'Different'},'EqOrDiff','', '',''};
+    user_parameter(:,6)   = {'   .Operator?','cell',{'Equal', 'Different', 'Superior', 'Inferior'},'Operator','', '',''};
     
     % Concatenate these user_parameters, and store them in opt.table
     VariableNames = {'Names_Display', 'Type', 'Default', 'PSOM_Fields', 'Scans_Input_DOF', 'IsInputMandatoryOrOptional','Help'};
@@ -194,8 +195,6 @@ end
 N = niftiread(files_in.In1{1});
 info = niftiinfo(files_in.In1{1});
 [path, name, ~] = fileparts(files_in.In1{1});
-jsonfile = [path, '/', name, '.json'];
-J = ReadJson(jsonfile);
 
 
 %% Process your data
@@ -208,10 +207,14 @@ J = ReadJson(jsonfile);
 % info2.Filemoddate = char(datetime('now'));
 % info2.Datatype = 'int16';
 
-if strcmp(opt.EqOrDiff, 'Equal')
+if strcmp(opt.Operator, 'Equal')
     Output = cast(N==str2double(opt.X), 'int16');
-elseif strcmp(opt.EqOrDiff, 'Different')
+elseif strcmp(opt.Operator, 'Different')
     Output = cast(N~=str2double(opt.X), 'int16');
+elseif strcmp(opt.Operator, 'Superior')
+    Output = cast(N>str2double(opt.X), 'int16');
+elseif strcmp(opt.Operator, 'Inferior')
+    Output = cast(N<str2double(opt.X), 'int16');
 end
 Output = Output(:,:,:,1,1,1,1);
 % Get the output header

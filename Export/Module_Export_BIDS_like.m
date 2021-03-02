@@ -37,8 +37,8 @@ if isempty(opt)
          '            --> sub_(patient''name)_(scan''s name).nii.gz'
          }
         };
-    user_parameter(:,2)   = {'   .Scan','XScan','','', {'SequenceName'},'Mandatory',...
-         'Please select the scans that will be exported'};
+    user_parameter(:,2)   = {'   .Scan','XScanOrXROI','','', {'SequenceName'},'Mandatory',...
+         'Please select the scans and/or the ROIs you want to export'};
     user_parameter(:,3)   = {'   .Output folder','char','','Output_Folder','', '','the name of the folder where will be copied your data.'};
     VariableNames = {'Names_Display', 'Type', 'Default', 'PSOM_Fields', 'Scans_Input_DOF', 'IsInputMandatoryOrOptional', 'Help'};
     opt.table = table(user_parameter(1,:)', user_parameter(2,:)', user_parameter(3,:)', user_parameter(4,:)', user_parameter(5,:)', user_parameter(6,:)', user_parameter(7,:)', 'VariableNames', VariableNames);
