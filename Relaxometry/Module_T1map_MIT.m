@@ -587,7 +587,7 @@ info2.Datatype = class(OutputImages);
 info2.PixelDimensions = info.PixelDimensions(1:length(size(OutputImages)));
 %info2.PixelDimensions = [info.PixelDimensions, 0];
 info2.ImageSize = size(OutputImages);
-info2.Description = [info.Description, 'Modified by ASL_InvEff Module'];
+info2.Description = [info.Description, 'Modified by T1_map_MIT Module'];
 
 OutputImages(OutputImages < 0) = NaN;
 OutputImages(OutputImages > 3500) = NaN;
