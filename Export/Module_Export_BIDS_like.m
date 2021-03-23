@@ -94,7 +94,7 @@ writetable(cvs_table, f_out)
 
 
 patient_list = unique(opt.Table_in.Patient);
-for i=1:numel(patient_list)
+parfor i=1:numel(patient_list)
     anat_path = strrep(opt.folder_out, '/Tmp', [filesep opt.Output_Folder filesep 'sub-' char(patient_list(i)) filesep 'anat']);
     tmp_table = opt.Table_in(opt.Table_in.Patient == patient_list(i),:);
     for j = 1 : size(tmp_table,1)
