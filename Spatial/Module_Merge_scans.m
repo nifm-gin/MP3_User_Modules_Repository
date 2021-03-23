@@ -110,8 +110,8 @@ end
 input(1).nifti_header = spm_vol(files_in.In1{1});
 input(2).nifti_header = spm_vol(files_in.In2{1});
 
-J1 = spm_jsonread(strrep(files_in.In1{1}, '.nii', '.json'));
-J2 = spm_jsonread(strrep(files_in.In2{1}, '.nii', '.json'));
+%J1 = spm_jsonread(strrep(files_in.In1{1}, '.nii', '.json'));
+%J2 = spm_jsonread(strrep(files_in.In2{1}, '.nii', '.json'));
 
 
 if strcmp(opt.Output_orientation, 'First input')   
