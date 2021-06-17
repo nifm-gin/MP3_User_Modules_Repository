@@ -278,7 +278,7 @@ else
     % We are now using the information about the unit of the repetition
     % time and the echo time in order to automatically convert it to second
         [~,~,~,TMAX,TTP,T0, CBV,CBF,MTT,~,~,~,~] = deconvolution_perfusion_gui(aif,squeeze(N),...
-            J.RepetitionTime.value(1) * convert_units(J.RepetitionTime.units, 'sec'),J.EchoTime.value* convert_units(J.RepetitionTime.units, 'sec'));
+            J.RepetitionTime.value(1) * convert_units(J.RepetitionTime.units, 'sec'),J.EchoTime.value* convert_units(J.EchoTime.units, 'sec'));
       % the conversions were hard coded before
 %     [~,~,~,TMAX,TTP,T0, CBV,CBF,MTT,~,~,~,~] = deconvolution_perfusion_gui(aif,squeeze(N),J.RepetitionTime.value(1)*10^(-3),J.EchoTime.value*10^(-3));
     if strcmp(opt.RemoveBackground, 'Yes')
