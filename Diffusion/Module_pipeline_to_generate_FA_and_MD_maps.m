@@ -62,7 +62,7 @@ if isempty(opt)
         }'};
     
     user_parameter(:,2)   = {'Select the Raw DWI-scan','1Scan','','',{'SequenceName'}, 'Mandatory',''};
-    user_parameter(:,3)   = {'Select the DWI-scan acquired in opposite direction','1Scan','','',{'SequenceName'}, 'Mandatory',''};
+    user_parameter(:,3)   = {'Select the DWI-scan acquired in opposite direction','1Scan','','',{'SequenceName'}, 'Optional',''};
     
     user_parameter(:,4)   = {'Parameters','','','','', '', ''};
     user_parameter(:,5)   = {'   .Output filename','char','FA','output_filename_ext_FA','','',...
@@ -135,108 +135,119 @@ setenv('FSLOUTPUTTYPE', 'NIFTI_GZ'); % this to tell what the output type would b
 % Since MRtrix needs bvec and bval files to generate FA and MD files we
 % have to generate such files using .json files
 %% first we will generate the bvecs and bvals for input1 and copy input1 in the tmp folder
-apa_json_data = spm_jsonread(strrep(files_in.In1{1}, '.nii', '.json'));
+DWI_json_data = spm_jsonread(strrep(files_in.In1{1}, '.nii', '.json'));
 [~,NAME,~] = fileparts(files_in.In1{1});
 %bvals
-apa_bvals = strrep(apa_json_data.bvals.value, ' ', ',');
+DWI_bvals = strrep(DWI_json_data.bvals.value, ' ', ',');
 format long
-apa_bvals = str2num(apa_bvals{1,1}); %#ok<ST2NM>
+DWI_bvals = str2num(DWI_bvals{1,1}); %#ok<ST2NM>
 fileID = fopen(fullfile(opt.folder_out, [NAME '.bvals']),'w');
-fprintf(fileID,'%5f ',apa_bvals);
+fprintf(fileID,'%5f ',DWI_bvals);
 fclose(fileID);
 
 %bvecs
-apa_bvecs = strrep(apa_json_data.bvecs.value, ' ', ',');
-apa_bvecs = str2num(apa_bvecs{1,1}); %#ok<ST2NM>
+DWI_bvecs = strrep(DWI_json_data.bvecs.value, ' ', ',');
+DWI_bvecs = str2num(DWI_bvecs{1,1}); %#ok<ST2NM>
 fileID = fopen(fullfile(opt.folder_out, [NAME '.bvecs']),'w');
-fprintf(fileID, [repmat('%.16f ', 1, size(apa_bvecs,2)-1), '%.20f\n'], apa_bvecs');
+fprintf(fileID, [repmat('%.16f ', 1, size(DWI_bvecs,2)-1), '%.20f\n'], DWI_bvecs');
 fclose(fileID);
 
 %copy input1 in the tmp folder
 copyfile(files_in.In1{1},  fullfile(opt.folder_out, [NAME '.nii']))
-apa_file = fullfile(opt.folder_out, [NAME '.nii']);
+DWI_file = fullfile(opt.folder_out, [NAME '.nii']);
 
-%% Now we will generate the bvecs and bvals for input2
-app_json_data = spm_jsonread(strrep(files_in.In2{1}, '.nii', '.json'));
-[~,NAME,~] = fileparts(files_in.In2{1});
-%bvals
-app_bvals = strrep(app_json_data.bvals.value, ' ', ',');
-app_bvals = str2num(app_bvals{1,1}); %#ok<ST2NM>
-fileID = fopen(fullfile(opt.folder_out, [NAME '.bvals']),'w');
-fprintf(fileID,'%5f ',app_bvals);
-fclose(fileID);
 
-%bvecs
-app_bvecs = strrep(app_json_data.bvecs.value, ' ', ',');
-app_bvecs = str2num(app_bvecs{1,1}); %#ok<ST2NM>
-fileID = fopen(fullfile(opt.folder_out, [NAME '.bvecs']),'w');
-fprintf(fileID, [repmat('%16f ', 1, size(app_bvecs,2)-1), '%20f\n'], app_bvecs');
-fclose(fileID);
 
-%copy input2 in the tmp folder
-copyfile(files_in.In1{1},  fullfile(opt.folder_out, [NAME '.nii']))
-app_file = fullfile(opt.folder_out, [NAME '.nii']);
-
-%%
+% MR convert nifti to mif
 disp('-------- MR convert nifti to mif ---------');
-status = system([mrtrix_path 'mrconvert ' app_file ' ' fullfile(opt.folder_out, 'dwi_APP.mif') ' -fslgrad ' strrep(app_file, '.nii', '.bvecs') ' ' strrep(app_file, '.nii', '.bvals')]);
-if status == 0
+status = system([mrtrix_path 'mrconvert ' DWI_file ' ' fullfile(opt.folder_out, 'DWI.mif') ' -fslgrad ' strrep(DWI_file, '.nii', '.bvecs') ' ' strrep(DWI_file, '.nii', '.bvals')]);
+if status ~= 0
     warning('FAIL - mrconvert APP');
 end
-
-status = system([mrtrix_path 'mrconvert ' apa_file ' ' fullfile(opt.folder_out, 'dwi_APA.mif') ' -fslgrad ' strrep(apa_file, '.nii', '.bvecs') ' ' strrep(apa_file, '.nii', '.bvals')]);
-if status ~= 0
-    warning('FAIL - mrconvert APA');
-end
-
 % DWI denoising
 disp('-------- DWI denoising ---------');
-status = system([mrtrix_path 'dwidenoise ' fullfile(opt.folder_out, 'dwi_APP.mif ') fullfile(opt.folder_out, 'dwi_APP_denoised.mif ') ' -noise ' fullfile(opt.folder_out, 'noiseAPP.mif')]);
+status = system([mrtrix_path 'dwidenoise ' fullfile(opt.folder_out, 'DWI.mif ') fullfile(opt.folder_out, 'DWI_denoised.mif ') ' -noise ' fullfile(opt.folder_out, 'noise_DWI_opp.mif')]);
 if status ~= 0
     warning('FAIL - dwidenoise APP');
 end
 
-status = system([mrtrix_path 'dwidenoise ' fullfile(opt.folder_out, 'dwi_APA.mif ') fullfile(opt.folder_out, 'dwi_APA_denoised.mif ') ' -noise ' fullfile(opt.folder_out, 'noiseAPA.mif')]);
-if status ~= 0
-    warning('FAIL - dwidenoise APA');
-end
-
 % Gibbs ringing artifacts removal
 disp('-------- Gibbs ringing artifacts removal ---------');
-status = system([mrtrix_path 'mrdegibbs ' fullfile(opt.folder_out, 'dwi_APP_denoised.mif ') fullfile(opt.folder_out, 'dwi_APPGibbs.mif ')]);
+status = system([mrtrix_path 'mrdegibbs ' fullfile(opt.folder_out, 'DWI_denoised.mif ') fullfile(opt.folder_out, 'DWI_Gibbs.mif ')]);
 if status ~= 0
     warning('FAIL - mrdegibbs APP');
 end
-status = system([mrtrix_path 'mrdegibbs ' fullfile(opt.folder_out, 'dwi_APA_denoised.mif ') fullfile(opt.folder_out, 'dwi_APAGibbs.mif ')]);
-if status ~= 0
-    warning('FAIL - mrdegibbs APA');
+
+
+%% Now we will generate the bvecs and bvals for input2 and processing (in present) : the DWI_opp_dir scan
+if isfield(files_in, 'In2')
+    DWI_opp_dir_json_data = spm_jsonread(strrep(files_in.In2{1}, '.nii', '.json'));
+    [~,NAME,~] = fileparts(files_in.In2{1});
+    %bvals
+    DWI_opp_dir_bvals = strrep(DWI_opp_dir_json_data.bvals.value, ' ', ',');
+    DWI_opp_dir_bvals = str2num(DWI_opp_dir_bvals{1,1}); %#ok<ST2NM>
+    fileID = fopen(fullfile(opt.folder_out, [NAME '.bvals']),'w');
+    fprintf(fileID,'%5f ',DWI_opp_dir_bvals);
+    fclose(fileID);
+    
+    %bvecs
+    DWI_opp_dir_bvecs = strrep(DWI_opp_dir_json_data.bvecs.value, ' ', ',');
+    DWI_opp_dir_bvecs = str2num(DWI_opp_dir_bvecs{1,1}); %#ok<ST2NM>
+    fileID = fopen(fullfile(opt.folder_out, [NAME '.bvecs']),'w');
+    fprintf(fileID, [repmat('%16f ', 1, size(DWI_opp_dir_bvecs,2)-1), '%20f\n'], DWI_opp_dir_bvecs');
+    fclose(fileID);
+    
+    %copy input2 in the tmp folder
+    copyfile(files_in.In1{1},  fullfile(opt.folder_out, [NAME '.nii']))
+    DWI_opp_dir_file = fullfile(opt.folder_out, [NAME '.nii']);
+    
+    % input 1 processing : the DWI scan
+    % MR convert nifti to mif
+    disp('-------- MR convert nifti to mif ---------');
+    status = system([mrtrix_path 'mrconvert ' DWI_file ' ' fullfile(opt.folder_out, 'DWI_opp_dir.mif') ' -fslgrad ' strrep(DWI_file, '.nii', '.bvecs') ' ' strrep(DWI_file, '.nii', '.bvals')]);
+    if status ~= 0
+        warning('FAIL - mrconvert APA');
+    end
+    
+    % DWI denoising
+    disp('-------- DWI denoising ---------');
+    status = system([mrtrix_path 'dwidenoise ' fullfile(opt.folder_out, 'DWI_opp_dir.mif ') fullfile(opt.folder_out, 'DWI_opp_dir_denoised.mif ') ' -noise ' fullfile(opt.folder_out, 'noise_DWI_opp_dir.mif')]);
+    if status ~= 0
+        warning('FAIL - dwidenoise APP');
+    end
+    
+    % Gibbs ringing artifacts removal
+    disp('-------- Gibbs ringing artifacts removal ---------');
+    status = system([mrtrix_path 'mrdegibbs ' fullfile(opt.folder_out, 'DWI_opp_dir_denoised.mif ') fullfile(opt.folder_out, 'DWI_opp_dir_Gibbs.mif ')]);
+    if status ~= 0
+        warning('FAIL - mrdegibbs APP');
+    end
+    
+    % DWI distorsion correction
+    disp('-------- DWI distorsion correction ---------');
+    system([mrtrix_path 'mrcat ' fullfile(opt.folder_out, 'DWI_Gibbs.mif ') fullfile(opt.folder_out, 'DWI_opp_dir_Gibbs.mif ') fullfile(opt.folder_out, 'all_DWIs.mif ') -axis 3']);
+    if status ~= 0
+        warning('FAIL - mrcat');
+    end
+    
+    
+    if exist([mrtrix_path 'dwipreproc'])~=0
+        status = system([mrtrix_path 'dwipreproc all_DWIs.mif dwi_preproc.mif -pe_dir PA -rpe_all -eddy_options="--slm=linear" ']);
+    elseif exist([mrtrix_path 'dwifslpreproc'])~=0
+        tic
+        status = system([mrtrix_path 'dwifslpreproc ' fullfile(opt.folder_out, 'all_DWIs.mif ') fullfile(opt.folder_out, 'dwi_preproc.mif ') '-pe_dir PA -rpe_all -eddy_options="--slm=linear" ']);
+        toc
+    else
+        status = 0;
+    end
+    if status ~= 0
+        warning('FAIL - dwipreproc');
+    end
 else
-    disp('DONE');
-end
-
-% DWI distorsion correction
-disp('-------- DWI distorsion correction ---------');
-system([mrtrix_path 'mrcat ' fullfile(opt.folder_out, 'dwi_APPGibbs.mif ') fullfile(opt.folder_out, 'dwi_APAGibbs.mif ') fullfile(opt.folder_out, 'all_DWIs.mif ') -axis 3']);
-if status ~= 0
-    warning('FAIL - mrcat');
+    movefile(fullfile(opt.folder_out, 'DWI_Gibbs.mif'), fullfile(opt.folder_out, 'dwi_preproc.mif'))
 end
 
 
-
-
-%     % vi ~/.bash_profile
-if exist([mrtrix_path 'dwipreproc'])~=0
-    status = system([mrtrix_path 'dwipreproc all_DWIs.mif dwi_preproc.mif -pe_dir PA -rpe_all -eddy_options="--slm=linear" ']);
-elseif exist([mrtrix_path 'dwifslpreproc'])~=0
-    tic
-    status = system([mrtrix_path 'dwifslpreproc ' fullfile(opt.folder_out, 'all_DWIs.mif ') fullfile(opt.folder_out, 'dwi_preproc.mif ') '-pe_dir PA -rpe_all -eddy_options="--slm=linear" ']);
-    toc
-else
-    status = 0;
-end
-if status ~= 0
-    warning('FAIL - dwipreproc');
-end
 
 % Mask estimation
 disp('-------- Mask estimation ---------');
@@ -292,5 +303,7 @@ files_to_delete = dir(fullfile(opt.folder_out, '*.bvals'));
 for i=1:length(files_to_delete)
     delete(fullfile(opt.folder_out, files_to_delete(i).name));
 end
-delete(app_file)
-delete(apa_file)
+if isfield(files_in, 'In2')
+    delete(DWI_opp_dir_file)
+end
+delete(DWI_file)
