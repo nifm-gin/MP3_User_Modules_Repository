@@ -41,8 +41,8 @@ if isempty(opt)
         'Extraction of Fractional anisotropy (FA) and Mean diffusivity (MD) maps Diffusion-weighted images (DWI)'
         'Using MRtrix we can extract 2 diffusion tensor parameters : Fractional anisotropy (FA) and Mean diffusivity (MD)'
         ''
-        'This module needs two DWI from dual orientation as inputs '
-        'For instance input1 is acquired in anteroposterior and input2 in posteroanterior)'
+        'This module needs One DWI as input and eventually a second one acquired in opposite direction '
+        'For instance input1 is acquired in anteroposterior and input2 in posteroanterior'
         'Output --> 2 parametrics maps: FA and MD '
         'This module correpond to a custom pipeline'
         '    designed by Arnaud Attyé, MD, CHU-Grenoble Alpes, France'
@@ -62,7 +62,7 @@ if isempty(opt)
         }'};
     
     user_parameter(:,2)   = {'Select the Raw DWI-scan','1Scan','','',{'SequenceName'}, 'Mandatory',''};
-    user_parameter(:,3)   = {'Select the DWI-scan acquired in opposite direction','1Scan','','',{'SequenceName'}, 'Optional',''};
+    user_parameter(:,3)   = {'Select the DWI-scan acquired in opposite direction (Optional)','1Scan','','',{'SequenceName'}, 'Optional',''};
     
     user_parameter(:,4)   = {'Parameters','','','','', '', ''};
     user_parameter(:,5)   = {'   .Output filename','char','FA','output_filename_ext_FA','','',...
