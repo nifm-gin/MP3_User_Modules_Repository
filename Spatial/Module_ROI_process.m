@@ -15,10 +15,11 @@ if isempty(opt)
     module_option(:,4)   = {'OutputSequenceName','Extension'};
     module_option(:,5)   = {'Erode','0'};
     module_option(:,6)   = {'Dilate','0'};
-    module_option(:,7)   = {'RefInput',1};
-    module_option(:,8)   = {'InputToReshape',1};
-    module_option(:,9)   = {'Table_in', table()};
-    module_option(:,10)   = {'Table_out', table()};
+    module_option(:,7)   = {'Fill_holes','No'};
+    module_option(:,8)   = {'RefInput',1};
+    module_option(:,9)   = {'InputToReshape',1};
+    module_option(:,10)   = {'Table_in', table()};
+    module_option(:,11)   = {'Table_out', table()};
     opt.Module_settings = psom_struct_defaults(struct(),module_option(1,:),module_option(2,:));
 % 
         %% list of everything displayed to the user associated to their 'type'
@@ -48,6 +49,8 @@ if isempty(opt)
     user_parameter(:,4)   = {'   .Output filename extension','char','_Extension','output_filename_ext','', '',''};
     user_parameter(:,5)   = {'   .Erode (in voxel)','numeric',0,'Erode','', '','Erode: the ROI will be eroded from X voxels'};
     user_parameter(:,6)   = {'   .Dilate (in voxel)','numeric',0,'Dilate','', '','Dilate: the ROI will be dilated from X voxels'};
+    user_parameter(:,7)   = {'   .Fill holes','cell',{'No', 'Yes'},'Fill_holes','', '','Fill holes: fill image holes'};
+
 
 
     VariableNames = {'Names_Display', 'Type', 'Default', 'PSOM_Fields', 'Scans_Input_DOF', 'IsInputMandatoryOrOptional','Help'};
@@ -111,9 +114,13 @@ info = niftiinfo(files_in.In1{1});
 
 %% !!!please add new function at the end of the list!!!
 if str2double(opt.Erode) ~= 0
-    N = imerode(N, strel('disk',str2double(opt.Erode)));    
-elseif str2double(opt.Dilate) ~= 0
-     N = imdilate(N, strel('disk',str2double(opt.Dilate)));    
+    N = imerode(N, strel('disk',str2double(opt.Erode)));  
+end
+if str2double(opt.Dilate) ~= 0
+     N = imdilate(N, strel('disk',str2double(opt.Dilate))); 
+end
+if strcmp(opt.Fill_holes, 'Yes')
+     N = imfill(N, 'holes');    
 end
 
 niftiwrite(N, files_out.In1{1}, info)
