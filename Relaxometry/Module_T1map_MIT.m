@@ -213,7 +213,6 @@ if ~Status
 end
 
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The core of the brick starts here %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -228,26 +227,19 @@ info = niftiinfo(files_in.In1{1});
 J = spm_jsonread(strrep(files_in.In1{1}, '.nii', '.json'));
 
 
-
-
 % retieve calculation parameter
 first_scan=opt.first_scan;
 M0mapYN=opt.M0_map;
 IEmapYN=opt.IE_map;
 %error('Sorry this module isn''t coded for the moment')
 
-
 %% retreive FAIR method
-%T1map_method = scan_acqp('##$Method=',data.texte,0);
 T1map_method = J.SequenceName.value{1};
 if(~isempty(regexpi(T1map_method,'\w*fair\w*')))
-    %PvVersion = scan_acqp('##TITLE=Parameter List, ParaVision ',data.texte,0);
     PvVersion = J.SoftwareVersions.value{1};
-    if ~isnan(PvVersion(1)) && ~isempty(regexpi(PvVersion,'\w*6.\w*'))
-        %FairMode=scan_acqp('##$PVM_FairMode=',data.texte,0); % SELECTIVE, NONSELECTIVE, INTERLEAVED or INTERLEAVED2
+    if ~isnan(PvVersion(1)) && ~isempty(regexpi(PvVersion,'\w*6.\w*'))||~isempty(regexpi(PvVersion,'\w*7.\w*'))
         FairMode = J.FairModePVM.value{1}; % SELECTIVE, NONSELECTIVE, INTERLEAVED or INTERLEAVED2
     else
-        %FairMode=scan_acqp('##$FairMode=',data.texte,0); % SELECTIVE, NONSELECTIVE, INTERLEAVED or INTERLEAVED2
         FairMode = J.FairMode.value{1};
     end
     if(max(strcmp(FairMode,{'SELECTIVE','NONSELECTIVE'}))==1)
@@ -260,11 +252,9 @@ else
 end
 
 %% slice acquisition order for correct inversion time
-%ObjOrderListName = sprintf('##$PVM_ObjOrderList=( %d )',size(data.reco.data,4));
 if isfield(J, 'ObjOrderList')
     PVM_ObjOrderList = J.ObjOrderList.value;
 end
-%PVM_ObjOrderList=scan_acqp(ObjOrderListName,data.texte,1)';
 if(size(N,3)==1)
     PVM_ObjOrderList = 0;
 end
@@ -277,7 +267,6 @@ if ( ~isempty(regexpi(T1map_method,'\w*fair\w*')) &&...
     interSliceTime = InterSliceTimeFairEpi(J);
     
     % inversion time
-    %FairTIR_Arr=(scan_acqp('FairTIR_Arr=',data.texte,1))';
     if ~isfield(J, 'FairTIRArr')
         FairTIR_Arr = J.FairTIRArrPVM.value.';
     else
@@ -289,9 +278,7 @@ elseif( ~isempty(regexpi(T1map_method,'\w*fair\w*')) &&...
         ( ~isempty(regexpi(T1map_method,'\w*segm\w*')) ||...
         ~isempty(regexpi(T1map_method,'\w*fisp\w*')) ) )
     % inversion time
-    %InvTimeSel = (scan_acqp('##$InvTimeSel=',data.texte,1))';
     InvTimeSel = J.InvTimeSel.value;
-    %InvTimeGlo=(scan_acqp('##$InvTimeGlob=',data.texte,1))';
     InvTimeGlo = J.InvTimeGlo.value;
     if(strcmp(FairMode,'SELECTIVE'))
         InvTimeRaw=InvTimeSel(first_scan:end);
@@ -308,19 +295,6 @@ end
 
 %% Init variable
 
-% T1map.acq=data.acq;
-% T1map.filename=data.filename;
-% T1map.texte=data.texte;
-% if strcmp(M0mapYN,'Yes')
-%     M0map.acq=data.acq;
-%     M0map.filename=data.filename;
-%     M0map.texte=data.texte;
-% end
-% if strcmp(IEmapYN,'Yes')
-%     IEmap.acq=data.acq;
-%     IEmap.filename=data.filename;
-%     IEmap.texte=data.texte;
-% end
 if(NumFairMode==1)
     data_in_vector = reshape(N, [size(N,1)*size(N,2),...
         size(N,3), size(N,4)]);
@@ -378,201 +352,16 @@ for it_mode = 1 : NumFairMode
 end
 
 %% reshape and formatting of data
-%tmp=reshape(fit_T1_result,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
 tmp=reshape(fit_T1_result,[size(N,1),size(N,2),size(N,3),NumFairMode]);
 T1map = tmp;
-%T1map.reco.data=permute(tmp, [1 2 4 3]);
 % correction Kober 2004 on apparent T1
 if ( ~isempty(regexpi(T1map_method,'\w*fair\w*')) &&...
         ( ~isempty(regexpi(T1map_method,'\w*segm\w*')) ||...
         ~isempty(regexpi(T1map_method,'\w*fisp\w*')) ) )
     PVM_ExcPulseAngle=scan_acqp('##$PVM_ExcPulseAngle=',data.texte,1);
     Seg_time=scan_acqp('##$Seg_time=',data.texte,1);
-%    T1map.reco.data = T1map.reco.data ./ ( 1 + T1map.reco.data * log( cos( PVM_ExcPulseAngle * pi / 180 ) ) / Seg_time );
 end
-%tmp=reshape(fit_T1_err,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
 tmp=reshape(fit_T1_err,[size(N,1),size(N,2),size(N,3),NumFairMode]);
-%T1map.reco.err=permute(tmp, [1 2 4 3]);
-% if strcmp(M0mapYN,'Yes')
-%     tmp=reshape(fit_M0_result,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
-%     M0map.reco.data=permute(tmp, [1 2 4 3]);
-%     tmp=reshape(fit_M0_err,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
-%     M0map.reco.err=permute(tmp, [1 2 4 3]);
-% end
-% if strcmp(IEmapYN,'Yes')
-%     tmp=reshape(fit_IE_result,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
-%     IEmap.reco.data=permute(tmp, [1 2 4 3]);
-%     tmp=reshape(fit_IE_err,[size(data.reco.data,1),size(data.reco.data,2),size(data.reco.data,4),NumFairMode]);
-%     IEmap.reco.err=permute(tmp, [1 2 4 3]);
-% end
-% 
-% %% T1 map formating
-% T1map.reco.echo_label(1,1) = {'fit_T1'};
-% T1map.reco.unit(1,1) = {'ms'};
-% if(NumFairMode==2)
-%     T1map.reco.echo_label(1,1) = {'fit_T1 selective'};
-%     T1map.reco.echo_label(1,2) = {'fit_T1 non selective'};
-%     T1map.reco.unit(1,2) = {'ms'};
-% end
-% T1map.reco.texte = 'T1map';
-% T1map.reco.date = date;
-% T1map.reco.no_echoes = size(T1map.reco.echo_label,2);
-% T1map.reco.no_expts  = size(T1map.reco.data,5);
-% T1map.reco.no_slices = T1map.acq.no_slices;
-% T1map.reco.globalmin=min(T1map.reco.data(:));
-% T1map.reco.globalmax=max(T1map.reco.data(:));
-% for m_expt=1:T1map.reco.no_expts,
-%     for m_slice=1:T1map.reco.no_slices,
-%         for m_echo=1:T1map.reco.no_echoes
-%             T1map.reco.fov_offsets(:,m_echo,m_slice,m_expt) = data.reco.fov_offsets(:,1,m_slice,m_expt);
-%             T1map.reco.fov_orientation(:,m_echo,m_slice,m_expt) = data.reco.fov_orientation(:,1,m_slice,m_expt);
-%             T1map.reco.label(m_echo,m_slice,m_expt) = data.reco.label(1,m_slice,m_expt);
-%             T1map.reco.phaselabel(m_echo,m_slice,m_expt) = data.reco.phaselabel(1,m_slice,m_expt);
-%             T1map.reco.fov_phase_orientation(m_echo,m_slice,m_expt) = data.reco.fov_phase_orientation(1,m_slice,m_expt);
-%             T1map.reco.scaling_factor(m_echo,m_slice,m_expt) = 1;
-%             T1map.reco.scaling_offset(m_echo,m_slice,m_expt) = 0;
-%         end
-%     end
-% end
-% T1map.reco = orderfields(T1map.reco);
-% 
-% T1map.reco.displayedecho=T1map.reco.no_echoes;
-% T1map.reco.displayedslice=data.reco.displayedslice;
-% T1map.reco.displayedexpt=1;
-% T1map.reco.thickness=data.reco.thickness;
-% T1map.reco.no_views=data.reco.no_views;
-% T1map.reco.no_samples=data.reco.no_samples;
-% T1map.reco.angAP=data.reco.angAP;
-% T1map.reco.angFH=data.reco.angFH;
-% T1map.reco.angRL=data.reco.angRL;
-% T1map.reco.angulation=data.reco.angulation;
-% T1map.reco.bitpix=data.reco.bitpix;
-% T1map.reco.fov=data.reco.fov;
-% 
-% ParamConfig=sprintf('##$QuantifMethod=levenbergmarquardt with function AB_expt1_v1.m\n##$First scan used=%s\n##$Raw scan used=%s\n##$interSliceTime=%0.2f\n##END=',...
-%     add_parameters{:}{1},...
-%     MTI_map_filename,...
-%     interSliceTime);
-% T1map.reco.paramQuantif = ParamConfig;
-% T1map.reco=orderfields(T1map.reco);
-% 
-% T1map.scan_number = 104;
-% T1map.reco_number = 1;
-% T1map.clip=[0 3500 1];
-% 
-% %% M0 map formating
-% if strcmp(M0mapYN,'Yes')
-%     M0map.reco.echo_label(1,1) = {'fit_M0'};
-%     M0map.reco.unit(1,1) = {'ms'};
-%     if(NumFairMode==2)
-%         M0map.reco.echo_label(1,1) = {'fit_M0 selective'};
-%         M0map.reco.echo_label(1,2) = {'fit_M0 non selective'};
-%         M0map.reco.unit(1,2) = {'a.u.'};
-%     end
-%     M0map.reco.texte = 'M0map';
-%     M0map.reco.date = date;
-%     M0map.reco.no_echoes = size(M0map.reco.echo_label,2);
-%     M0map.reco.no_expts  = size(M0map.reco.data,5);
-%     M0map.reco.no_slices = M0map.acq.no_slices;
-%     M0map.reco.globalmin=min(M0map.reco.data(:));
-%     M0map.reco.globalmax=max(M0map.reco.data(:));
-%     for m_expt=1:M0map.reco.no_expts,
-%         for m_slice=1:M0map.reco.no_slices,
-%             for m_echo=1:M0map.reco.no_echoes
-%                 M0map.reco.fov_offsets(:,m_echo,m_slice,m_expt) = data.reco.fov_offsets(:,1,m_slice,m_expt);
-%                 M0map.reco.fov_orientation(:,m_echo,m_slice,m_expt) = data.reco.fov_orientation(:,1,m_slice,m_expt);
-%                 M0map.reco.label(m_echo,m_slice,m_expt) = data.reco.label(1,m_slice,m_expt);
-%                 M0map.reco.phaselabel(m_echo,m_slice,m_expt) = data.reco.phaselabel(1,m_slice,m_expt);
-%                 M0map.reco.fov_phase_orientation(m_echo,m_slice,m_expt) = data.reco.fov_phase_orientation(1,m_slice,m_expt);
-%                 M0map.reco.scaling_factor(m_echo,m_slice,m_expt) = 1;
-%                 M0map.reco.scaling_offset(m_echo,m_slice,m_expt) = 0;
-%             end
-%         end
-%     end
-%     M0map.reco = orderfields(M0map.reco);
-%     
-%     M0map.reco.displayedecho=M0map.reco.no_echoes;
-%     M0map.reco.displayedslice=M0map.reco.no_slices;
-%     M0map.reco.displayedexpt=1;
-%     M0map.reco.thickness=data.reco.thickness;
-%     M0map.reco.no_views=data.reco.no_views;
-%     M0map.reco.no_samples=data.reco.no_samples;
-%     M0map.reco.angAP=data.reco.angAP;
-%     M0map.reco.angFH=data.reco.angFH;
-%     M0map.reco.angRL=data.reco.angRL;
-%     M0map.reco.angulation=data.reco.angulation;
-%     M0map.reco.bitpix=data.reco.bitpix;
-%     M0map.reco.fov=data.reco.fov;
-%     
-%     
-%     M0map.reco.paramQuantif = ParamConfig;
-%     M0map.reco=orderfields(M0map.reco);
-%     
-%     M0map.scan_number = 105;
-%     M0map.reco_number = 1;
-% end
-% 
-% %% IE map formating
-% if strcmp(IEmapYN,'Yes')
-%     IEmap.reco.echo_label(1,1) = {'fit_IE'};
-%     IEmap.reco.unit(1,1) = {'ms'};
-%     if(NumFairMode==2)
-%         IEmap.reco.echo_label(1,1) = {'fit_IE selective'};
-%         IEmap.reco.echo_label(1,2) = {'fit_IE non selective'};
-%         IEmap.reco.unit(1,2) = {'a.u.'};
-%     end
-%     IEmap.reco.texte = 'IEmap';
-%     IEmap.reco.date = date;
-%     IEmap.reco.no_echoes = size(IEmap.reco.echo_label,2);
-%     IEmap.reco.no_expts  = size(IEmap.reco.data,5);
-%     IEmap.reco.no_slices = IEmap.acq.no_slices;
-%     IEmap.reco.globalmin=min(IEmap.reco.data(:));
-%     IEmap.reco.globalmax=max(IEmap.reco.data(:));
-%     for m_expt=1:IEmap.reco.no_expts,
-%         for m_slice=1:IEmap.reco.no_slices,
-%             for m_echo=1:IEmap.reco.no_echoes
-%                 IEmap.reco.fov_offsets(:,m_echo,m_slice,m_expt) = data.reco.fov_offsets(:,1,m_slice,m_expt);
-%                 IEmap.reco.fov_orientation(:,m_echo,m_slice,m_expt) = data.reco.fov_orientation(:,1,m_slice,m_expt);
-%                 IEmap.reco.label(m_echo,m_slice,m_expt) = data.reco.label(1,m_slice,m_expt);
-%                 IEmap.reco.phaselabel(m_echo,m_slice,m_expt) = data.reco.phaselabel(1,m_slice,m_expt);
-%                 IEmap.reco.fov_phase_orientation(m_echo,m_slice,m_expt) = data.reco.fov_phase_orientation(1,m_slice,m_expt);
-%                 IEmap.reco.scaling_factor(m_echo,m_slice,m_expt) = 1;
-%                 IEmap.reco.scaling_offset(m_echo,m_slice,m_expt) = 0;
-%             end
-%         end
-%     end
-%     IEmap.reco = orderfields(IEmap.reco);
-%     
-%     IEmap.reco.displayedecho=IEmap.reco.no_echoes;
-%     IEmap.reco.displayedslice=IEmap.reco.no_slices;
-%     IEmap.reco.displayedexpt=1;
-%     IEmap.reco.thickness=data.reco.thickness;
-%     IEmap.reco.no_views=data.reco.no_views;
-%     IEmap.reco.no_samples=data.reco.no_samples;
-%     IEmap.reco.angAP=data.reco.angAP;
-%     IEmap.reco.angFH=data.reco.angFH;
-%     IEmap.reco.angRL=data.reco.angRL;
-%     IEmap.reco.angulation=data.reco.angulation;
-%     IEmap.reco.bitpix=data.reco.bitpix;
-%     IEmap.reco.fov=data.reco.fov;
-%     IEmap.reco.paramQuantif = ParamConfig;
-%     IEmap.reco=orderfields(IEmap.reco);
-%     
-%     IEmap.scan_number = 105;
-%     IEmap.reco_number = 1;
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
 
 
 OutputImages = T1map;
@@ -585,20 +374,15 @@ info2.Filename = files_out.In1{1};
 info2.Filemoddate = char(datetime('now'));
 info2.Datatype = class(OutputImages);
 info2.PixelDimensions = info.PixelDimensions(1:length(size(OutputImages)));
-%info2.PixelDimensions = [info.PixelDimensions, 0];
 info2.ImageSize = size(OutputImages);
 info2.Description = [info.Description, 'Modified by T1_map_MIT Module'];
 
 OutputImages(OutputImages < 0) = NaN;
 OutputImages(OutputImages > 3500) = NaN;
-% AUC(AUC > 5000) = -1;
-% AUC(isnan(AUC)) = -1;
 
 % save the new .nii file
 niftiwrite(OutputImages, files_out.In1{1}, info2);
 
-% % so far copy the .json file of the first input
-% copyfile(strrep(files_in.In1{1}, '.nii', '.json'), strrep(files_out.In1{1}, '.nii', '.json'))
 
 %% Json Processing
 [path, name, ~] = fileparts(files_in.In1{1});
