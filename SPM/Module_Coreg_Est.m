@@ -11,21 +11,18 @@ if isempty(opt)
 %     % --> module_option(2,:) = defaults values
     module_option(:,1)   = {'folder_out',''};
     module_option(:,2)   = {'flag_test',true};
-    module_option(:,3)   = {'Execution_Mode','Through all sessions of one Patient'};
-    module_option(:,4)   = {'OutputSequenceName','Prefix'};
-    module_option(:,5)   = {'Function','nmi'};
-    module_option(:,6)   = {'Separation','4 2 1 0.5 0.1'};
-    module_option(:,7)   = {'Tolerence','0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001'};
-    module_option(:,8)   = {'Hist_Smooth','7 7'};
-    module_option(:,9)   = {'Interpolation','4th Degree B-Spline'};
-    module_option(:,10)   = {'Wrapping','No wrap'};
-    module_option(:,11)   = {'Masking','Dont mask images'};
-    module_option(:,12)   = {'output_filename_ext','CoregEst'};
-    module_option(:,13)   = {'RefInput',2};
-    module_option(:,14)   = {'InputToReshape',1};
-    module_option(:,15)   = {'Table_in', table()};
-    module_option(:,16)   = {'Table_out', table()};
+    module_option(:,3)   = {'OutputSequenceName','Prefix'};
+    module_option(:,4)   = {'Function','nmi'};
+    module_option(:,5)   = {'Separation','4 2'};
+    module_option(:,6)   = {'Tolerence','0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001'};
+    module_option(:,7)   = {'Hist_Smooth','7 7'};
+    module_option(:,8)   = {'output_filename_ext','CoregEst'};
+    module_option(:,9)   = {'RefInput',2};
+    module_option(:,10)   = {'InputToReshape',1};
+    module_option(:,11)   = {'Table_in', table()};
+    module_option(:,12)   = {'Table_out', table()};
     opt.Module_settings = psom_struct_defaults(struct(),module_option(1,:),module_option(2,:));
+ 
 %   
         %% list of everything displayed to the user associated to their 'type'
          % --> user_parameter(1,:) = user_parameter_list
@@ -38,7 +35,7 @@ if isempty(opt)
          % will be display to help the user)
     user_parameter(:,1)   = {'Description','Text','','','','',...
         {
-    'Within-subject registration using a rigid-body model and image reslicing.'
+    'Within-subject registration using a rigid-body model.'
     ''
     'The registration method used here is based on work by Collignon et al.'
     'The original interpolation method described in this paper has been changed in order to give a smoother cost function.'
@@ -49,29 +46,28 @@ if isempty(opt)
     ''
     'Registration parameters are stored in the headers of the "source" and the "other" images.'
     }'};
-    user_parameter(:,2)   = {'Execution Mode','cell',{'All Database','Through all sessions of one Patient','Through Each Session'},'Execution_Mode','','',...
-        'Please select the excecution mode for the coreg module'};
-    user_parameter(:,3)   = {'Reference Image','1Scan1TPXP','','', {'SequenceName', 'Tp', 'Patient'},'Mandatory',...
+  
+    user_parameter(:,2)   = {'Reference Image','1Scan1TPXP','','', {'SequenceName', 'Tp', 'Patient'},'Mandatory',...
          'This is the image that is assumed to remain stationary (sometimes known as the target or template image), while the source image is moved to match it.'};
-    user_parameter(:,4)   = {'Source Image','1Scan','','',{'SequenceName'},'Mandatory',...
+    user_parameter(:,3)   = {'Source Image','1Scan','','',{'SequenceName'},'Mandatory',...
          'This is the image that is jiggled about to best match the reference.'};
-    user_parameter(:,5)   = {'Other Images','XScanOrXROI','','',{'SequenceName'},'Optional',...
+    user_parameter(:,4)   = {'Other Images','XScanOrXROI','','',{'SequenceName'},'Optional',...
          'These are any images that need to remain in alignment with the source image.'};
-    user_parameter(:,6)   = {'Parameters','','','','','',''};
-    user_parameter(:,7)   = {'    Estimation Options','', '','','','',...
+    user_parameter(:,5)   = {'Parameters','','','','','',''};
+    user_parameter(:,6)   = {'    Estimation Options','', '','','','',...
         'Various registration options, which are passed to the Powell optimisation algorithm.'};
-    user_parameter(:,8)   = {'       .Objective Function','cell',{'mi','ncc', 'nmi', 'ecc'},'Function','','',...
+    user_parameter(:,7)   = {'       .Objective Function','cell',{'mi','ncc', 'nmi', 'ecc'},'Function','','',...
         'Registration involves finding parameters that either maximise or minimise some objective function. For inter-modal registration, use Mutual Information, Normalised Mutual Information, or Entropy Correlation Coefficient. For within modality, you could also use Normalised Cross Correlation.'};
-    user_parameter(:,9)   = {'       .Tolerances','char','','Tolerence','','',...
+    user_parameter(:,8)   = {'       .Tolerances','char','','Tolerence','','',...
         'The average distance between sampled points (in mm).  Can be a vector to allow a coarse registration followed by increasingly fine ones.'};
-    user_parameter(:,10)  = {'       .Separation','numeric','','Separation','','',...
+    user_parameter(:,9)  = {'       .Separation','numeric','','Separation','','',...
         {'The accuracy for each parameter.  Iterations stop when differences between successive estimates are less than the required tolerance.'
         'Default Value :'
         '     - Human data : 4 2'
         '     - Rat data : 4 2 1 0.5 0.1'}};
-    user_parameter(:,11)  = {'       .Histogram Smoothing','numeric','','Hist_Smooth','','',...
+    user_parameter(:,10)  = {'       .Histogram Smoothing','numeric','','Hist_Smooth','','',...
         'Gaussian smoothing to apply to the 256x256 joint histogram. Other information theoretic coregistration methods use fewer bins, but Gaussian smoothing seems to be more elegant.'};
-    user_parameter(:,12)  = {'       .Filename prefix','char','','output_filename_ext','','',...
+    user_parameter(:,11)  = {'       .Filename prefix','char','','output_filename_ext','','',...
         'Specify the string to be prepended to the filenames of the resliced image file(s). Default prefix is ''CoregEst''.'};
 
 
@@ -214,15 +210,13 @@ if isfield(files_in, 'In3')
     matlabbatch{1}.spm.spatial.coreg.estimate.other = other';
 end
 
-
-
+matlabbatch{1}.spm.spatial.coreg.estimate.eoptions.cost_fun = opt.Function;
 matlabbatch{1}.spm.spatial.coreg.estimate.eoptions.sep = str2num(opt.Separation);
-
 matlabbatch{1}.spm.spatial.coreg.estimate.eoptions.tol = str2num(opt.Tolerence); %#ok<*ST2NM>
 matlabbatch{1}.spm.spatial.coreg.estimate.eoptions.fwhm = str2num(opt.Hist_Smooth);
 
 
-% [SPMinter,SPMgraph,~] = spm('FnUIsetup','test',1);
+[SPMinter,SPMgraph,~] = spm('FnUIsetup','test',1);
 jobs = repmat(matlabbatch, 1, 1);
 inputs = cell(0, 1);
 for crun = 1:1
@@ -232,7 +226,7 @@ spm_jobman('initcfg');
 spm_jobman('run', jobs, inputs{:});
 
 
-%close(SPMinter)
-%close(SPMgraph)
+close(SPMinter)
+close(SPMgraph)
 
 
