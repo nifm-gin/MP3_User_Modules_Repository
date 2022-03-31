@@ -88,7 +88,6 @@ if isempty(files_out)
     opt.Table_out = opt.Table_in;
     opt.Table_out.IsRaw = categorical(0);   
     opt.Table_out.Path = categorical(cellstr([opt.folder_out, filesep]));
-   %11047-20180321-FLAIR_20200520-103707002_hd-BET.nii
     if strcmp(opt.OutputSequenceName, 'AllName')
         opt.Table_out.SequenceName = categorical(cellstr(opt.output_filename_ext));
     elseif strcmp(opt.OutputSequenceName, 'Extension')
@@ -127,10 +126,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-% set FSL environment
+%setenv('PATH', [getenv('PATH') ':/Users/blemasso/Data_non_synch/code/HD-BET/HD_BET']);
 
-%setenv('FSLDIR','/usr/local/fsl');  % this to tell where FSL folder is
-%setenv('FSLOUTPUTTYPE', 'NIFTI_GZ'); % this to tell what the output type would be
+%setenv('PATH', [getenv('PATH') ':/usr/local/fsl/bin']);
 
 % command to excute the algorithm
 if ~strcmp(opt.CPU_GPU, 'cpu') && isnan(str2double(opt.CPU_GPU))
@@ -153,6 +151,9 @@ else
 end
 
 cmd = strcat('hd-bet', {' -i '}, files_in.In1{:}, {' -o '}, files_out.In1{:},{' '}, device, {' '}, mode,{' '}, tta);
+
+PATHenv = getenv('PATH');
+setenv('PATH', [PATHenv ':/Library/Frameworks/Python.framework/Versions/3.8/bin']);
 % execute the command
 system(cmd{:});
 
@@ -175,6 +176,7 @@ info.Filename =files_out.In1{:};
 info.Transform = affine3d(FinalMat');
 info.ImageSize = size(output_image); 
 %save the nifti updated (croped and correct matric)
+output_image = cast(output_image, info.Datatype);
 niftiwrite(output_image,files_out.In1{:}, info);
 
 % same for the mask
