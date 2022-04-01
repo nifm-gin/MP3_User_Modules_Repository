@@ -9,7 +9,7 @@ if isempty(opt)
 	%   % define every option needed to run this module
 	% --> module_option(1,:) = field names
     % --> module_option(2,:) = defaults values
-    module_option(:,1)   = {'script_location',  '/home/bouxf/Code/ANTs/antsbin/bin'};
+    module_option(:,1)   = {'script_location',  '/Users/blemasso/Data_non_synch/code/Ants/install/bin'};
     module_option(:,2)   = {'dimension',        '3'}; % TODO:remove my path
     module_option(:,3)   = {'transformation',   's'};
     module_option(:,4)   = {'atlas_filename',   'Atlas'};
@@ -209,7 +209,7 @@ J = ReadJson(jsonfile);
 
 J = KeepModuleHistory(J, struct('files_in', files_in, 'files_out', files_out, 'opt', opt, 'ExecutionDate', datestr(datetime('now'))), mfilename); 
 
-[path, name, ~] = fileparts(files_out.In2{1});
+[path, name, ~] = fileparts(files_out.In1{1});
 jsonfile = [path, '/', name, '.json'];
 WriteJson(J, jsonfile)
 
