@@ -16,7 +16,7 @@ if isempty(opt)
     module_option(:,5)   = {'up',0};
     module_option(:,6)   = {'pitch',0};
     module_option(:,7)   = {'roll',0};
-    module_option(:,8)   = {'yall',0};
+    module_option(:,8)   = {'yaw',0};
     module_option(:,9)   = {'resize_x',1};
     module_option(:,10)   = {'resize_y',1};
     module_option(:,11)   = {'resize_z',1};
@@ -54,7 +54,7 @@ if isempty(opt)
     user_parameter(:,7)   = {'   .up (mm)','numeric',0,'up','', '',''};
     user_parameter(:,8)   = {'   .pitch (rad)','numeric',0,'pitch','', '',''};
     user_parameter(:,9)   = {'   .roll (rad)','numeric',0,'roll','', '',''};
-    user_parameter(:,10)  = {'   .yall (rad)','numeric',0,'yall','', '',''};
+    user_parameter(:,10)  = {'   .yaw (rad)','numeric',0,'yaw','', '',''};
     user_parameter(:,11)  = {'   .resize (x)','numeric',1,'resize_x','', '',''};
     user_parameter(:,12)  = {'   .resize (y)','numeric',1,'resize_y','', '',''};
     user_parameter(:,13)  = {'   .resize (z)','numeric',1,'resize_z','', '',''};
@@ -109,7 +109,7 @@ end
 % Otherwise the spm will overwrite the file!!
 copyfile(files_in.In1{1},  files_out.In1{1})
 
-userdata  = [opt.right opt.forward opt.up opt.pitch opt.roll opt.yall opt.resize_x opt.resize_y opt.resize_z 0 0 0];
+userdata  = [opt.right opt.forward opt.up opt.pitch opt.roll opt.yaw opt.resize_x opt.resize_y opt.resize_z 0 0 0];
 
 matrice_transformation = spm_matrix(userdata);
  if det(matrice_transformation)<=0
