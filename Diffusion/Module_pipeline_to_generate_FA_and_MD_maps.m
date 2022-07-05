@@ -140,7 +140,12 @@ DWI_json_data = spm_jsonread(strrep(files_in.In1{1}, '.nii', '.json'));
 %bvals
 DWI_bvals = strrep(DWI_json_data.bvals.value, ' ', ',');
 format long
-DWI_bvals = str2num(DWI_bvals{1,1}); %#ok<ST2NM>
+if ischar(DWI_bvals)
+    DWI_bvals = str2num(DWI_bvals(3:end-2)); %#ok<ST2NM>
+else
+    DWI_bvals = str2num(DWI_bvals{1,1}); %#ok<ST2NM>
+end
+    
 fileID = fopen(fullfile(opt.folder_out, [NAME '.bvals']),'w');
 fprintf(fileID,'%5f ',DWI_bvals);
 fclose(fileID);
@@ -162,20 +167,20 @@ DWI_file = fullfile(opt.folder_out, [NAME '.nii']);
 disp('-------- MR convert nifti to mif ---------');
 status = system([mrtrix_path 'mrconvert ' DWI_file ' ' fullfile(opt.folder_out, 'DWI.mif') ' -fslgrad ' strrep(DWI_file, '.nii', '.bvecs') ' ' strrep(DWI_file, '.nii', '.bvals')]);
 if status ~= 0
-    warning('FAIL - mrconvert APP');
+    warning('FAIL - mrconvert input 1');
 end
 % DWI denoising
 disp('-------- DWI denoising ---------');
 status = system([mrtrix_path 'dwidenoise ' fullfile(opt.folder_out, 'DWI.mif ') fullfile(opt.folder_out, 'DWI_denoised.mif ') ' -noise ' fullfile(opt.folder_out, 'noise_DWI_opp.mif')]);
 if status ~= 0
-    warning('FAIL - dwidenoise APP');
+    warning('FAIL - dwidenoise input 1');
 end
 
 % Gibbs ringing artifacts removal
 disp('-------- Gibbs ringing artifacts removal ---------');
 status = system([mrtrix_path 'mrdegibbs ' fullfile(opt.folder_out, 'DWI_denoised.mif ') fullfile(opt.folder_out, 'DWI_Gibbs.mif ')]);
 if status ~= 0
-    warning('FAIL - mrdegibbs APP');
+    warning('FAIL - mrdegibbs input 1');
 end
 
 
@@ -185,7 +190,13 @@ if isfield(files_in, 'In2')
     [~,NAME,~] = fileparts(files_in.In2{1});
     %bvals
     DWI_opp_dir_bvals = strrep(DWI_opp_dir_json_data.bvals.value, ' ', ',');
-    DWI_opp_dir_bvals = str2num(DWI_opp_dir_bvals{1,1}); %#ok<ST2NM>
+    
+    if ischar(DWI_opp_dir_bvals)
+        DWI_opp_dir_bvals = str2num(DWI_opp_dir_bvals(3:end-2)); %#ok<ST2NM>
+    else
+        DWI_opp_dir_bvals = str2num(DWI_opp_dir_bvals{1,1}); %#ok<ST2NM>
+    end
+    
     fileID = fopen(fullfile(opt.folder_out, [NAME '.bvals']),'w');
     fprintf(fileID,'%5f ',DWI_opp_dir_bvals);
     fclose(fileID);
@@ -206,21 +217,21 @@ if isfield(files_in, 'In2')
     disp('-------- MR convert nifti to mif ---------');
     status = system([mrtrix_path 'mrconvert ' DWI_file ' ' fullfile(opt.folder_out, 'DWI_opp_dir.mif') ' -fslgrad ' strrep(DWI_file, '.nii', '.bvecs') ' ' strrep(DWI_file, '.nii', '.bvals')]);
     if status ~= 0
-        warning('FAIL - mrconvert APA');
+        warning('FAIL - mrconvert APA input 2');
     end
     
     % DWI denoising
     disp('-------- DWI denoising ---------');
     status = system([mrtrix_path 'dwidenoise ' fullfile(opt.folder_out, 'DWI_opp_dir.mif ') fullfile(opt.folder_out, 'DWI_opp_dir_denoised.mif ') ' -noise ' fullfile(opt.folder_out, 'noise_DWI_opp_dir.mif')]);
     if status ~= 0
-        warning('FAIL - dwidenoise APP');
+        warning('FAIL - dwidenoise APP input 2');
     end
     
     % Gibbs ringing artifacts removal
     disp('-------- Gibbs ringing artifacts removal ---------');
     status = system([mrtrix_path 'mrdegibbs ' fullfile(opt.folder_out, 'DWI_opp_dir_denoised.mif ') fullfile(opt.folder_out, 'DWI_opp_dir_Gibbs.mif ')]);
     if status ~= 0
-        warning('FAIL - mrdegibbs APP');
+        warning('FAIL - mrdegibbs APP input 2');
     end
     
     % DWI distorsion correction
