@@ -119,7 +119,7 @@ for i=1:length(UTp)
         %[solidity] = getSolidity(ROIonly,pixdim_x_y,pixdim_z);
         %[volume] = getVolume(ROIonly,pixdim_x_y,pixdim_z);
         
-        [ROIonly,levels] = prepareVolume(scan_vol,ROI_vol,'CT',pixdim_x_y,pixdim_z,1,opt.Isotropic_Resampling_Val,'Matrix','Equal',opt.NbGrayLevels);
+        [ROIonly,levels] = prepareVolume(scan_vol,ROI_vol,'CT',pixdim_x_y,pixdim_z,1,opt.Isotropic_Resampling_Val,'Matrix','Uniform',opt.NbGrayLevels);
         [GLCM] = getGLCM(ROIonly,levels); 
         [glcmTextures] = getGLCMtextures(GLCM);
         glcmTextures.Variance_glcm = glcmTextures.Variance;
