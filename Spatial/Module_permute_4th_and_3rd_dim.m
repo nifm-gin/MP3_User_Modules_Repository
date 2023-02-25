@@ -14,7 +14,7 @@ if isempty(opt)
     module_option(:,3)   = {'output_filename_ext','_permuted'};
     module_option(:,4)   = {'OutputSequenceName','Extension'};
     module_option(:,5)   = {'Slice_thickness_option','TR'};
-    module_option(:,6)   = {'Slice_thicness_manually_added', ' '};
+    module_option(:,6)   = {'Slice_thickness_manually_added', ' '};
     module_option(:,7)   = {'RefInput',1};
     module_option(:,8)   = {'InputToReshape',1};
     module_option(:,9)   = {'Table_in', table()};
@@ -193,6 +193,7 @@ end
 info_permuted.Filemoddate = char(datetime('now'));
 info_permuted.Description = [info_permuted.Description, 'Modified by Module_permute_4th_and_3rd_dim'];
     
+[N_permuted_reoriented_test, FinalMat] = CropNifti(N_permuted_reoriented, info_permuted.Transform.T');
 
 
 niftiwrite(N_permuted_reoriented, files_out.In1{1} , info_permuted)
