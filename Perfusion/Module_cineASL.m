@@ -37,14 +37,25 @@ if isempty(opt)
          % --> user_parameter(6,:) = IsInputMandatoryOrOptional : If none, the input is set as Optional. 
          % --> user_parameter(7,:) = Help : text data which describe the parameter (it
          % will be display to help the user)
-    user_parameter(:,1)   = {'Description','Text','','','', '','Description of the module:  Calculate Perfusion Maps from spASL and cineASL; dode from F. Kober ...'}  ;
-    user_parameter(:,2)   = {'Select the CineCasl-Control scan','1Scan','','',{'SequenceName'}, 'Mandatory',''};
-    user_parameter(:,3)   = {'Select the CineCasl-Tag scan','1Scan','','',{'SequenceName'}, 'Mandatory',''};
+    user_parameter(:,1)   = {'Description','Text','','','', '',{'Description of the module: '
+        'The objective of this module is to create myocardial blood flow (MBF) maps from CineASL sequences.'
+        'Details on the method can be found in this publication :'
+        'Troalen T, Capron T, Bernard M, Kober F.'
+        'In vivo characterization of rodent cyclic myocardial perfusion variation at rest and during adenosine-induced stress using cine-ASL cardiovascular magnetic resonance.'
+        'J Cardiovasc Magn Reson. 2014 Feb 18;16(1):18.'
+        'doi: 10.1186/1532-429X-16-18.'
+        'PMID: 24548535;'
+        'PMCID: PMC3937054'
+        ''
+        'This module was coded by B. Lemasson (GIN; Grenoble; France) using the code and assistance of F. Kober (CRMBM Marseille; France).'}
+        }  ;
+    user_parameter(:,2)   = {'Select the CineAsl-Control scan','1Scan','','',{'SequenceName'}, 'Mandatory','Please select a 5d scan correspondonding the the CineASL-control'};
+    user_parameter(:,3)   = {'Select the CineAsl-Tag scan','1Scan','','',{'SequenceName'}, 'Mandatory','Please select a 5d scan correspondonding the the CineASL-Tag'};
 
-    user_parameter(:,4)   = {'   .Filename exention','char','CBF','output_filename_ext','','',...
+    user_parameter(:,4)   = {'   .Filename exention','char','MBF','output_filename_ext','','',...
         {'Specify the filename extention to add the the following names :'
         'Output filenames are : '
-        '     - CBF'
+        '     - MBF'
         '     - CineASL_AvCTL'
         '     - CineASLAvTag'
         '     - CineAslDeltaMA'}'};
@@ -71,7 +82,7 @@ if isempty(opt)
     
 end
 %%%%%%%%
-opt.NameOutFiles = {'CBF', 'CineAsl_DeltaMap', 'CineAsl_AvTag', 'CineAsl_AvCTL'};
+opt.NameOutFiles = {'MBF', 'CineAsl_DeltaMap', 'CineAsl_AvTag', 'CineAsl_AvCTL'};
 
 if isempty(files_out)
     for i=1:length(opt.NameOutFiles)
@@ -92,7 +103,7 @@ end
 
 %% Syntax
 if ~exist('files_in','var')||~exist('files_out','var')||~exist('opt','var')
-    error('ModuleCBF:brick','Bad syntax, type ''help %s'' for more info.',mfilename)
+    error('ModuleCineASL:brick','Bad syntax, type ''help %s'' for more info.',mfilename)
 end
 
 
@@ -149,8 +160,8 @@ delta = absdelta ./ cineASL_CTR_av .* (cineASL_TAG_av ~= 0);
 %calculate the MBF according to Capron et al. MRM 2013
 MBF = opt.Lambda * mss ./ T1star * delta ./ (2. * opt.Beta - delta) * 60;       
 
-% Map to save :  MBF, delta, series_AvTag, series_AvCtrl
 
+% Map to save :  MBF, delta, series_AvTag, series_AvCtrl
 mapsVar = {MBF, delta, cineASL_TAG_av, cineASL_CTR_av};
 info  =  niftiinfo(files_in.In1{1});
 for i=1:length(mapsVar)
@@ -175,13 +186,6 @@ for i=1:length(mapsVar)
 
 end
 
-% 
-% if ~exist('OutputImages_reoriented', 'var')
-%     OutputImages_reoriented = write_volume(OutputImages, input(ref_scan).nifti_header, 'axial');
-% else
-%     OutputImages_reoriented = OutputImages;
-% end
-% 
 
 %
 
