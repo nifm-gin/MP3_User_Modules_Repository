@@ -43,15 +43,41 @@ end
 
 
 f = 1;
-switch Method
-    
+switch Method 
+    case 'DBMonFly'
+        tic
+        % structure with 3D distributions associated to
+        g = struct2cell(load('data/Resources/distrib_on_fly_coudert/vessels_geo_khicorrected_gradient3_2850.mat'));
+        geo = g{1};
+        for s = 1:slices
+            %Estimation of parameters
+%             [estim, score, matchedVol] = EstimateParametersOnFly(reshape(Sequences(:,:,:,s),s1*s2,t), Dico{f}.MRSignals, Dico{f}.Parameters.Par, geo, Dico{f}.Parameters.Labels);
+            [estim, score, matchedVol] = EstimateParametersOnFlyPar(reshape(Sequences(:,:,:,s),s1*s2,t), Dico{f}.MRSignals, Dico{f}.Parameters.Par, geo, Dico{f}.Parameters.Labels);
+            Estimation.GridSearch.Y(:,:,:,s) = reshape(estim, s1,s2, []);
+            Estimation.scoreMap(:,:,s) = reshape(score, s1,s2, []);
+            Estimation.matchedVol(:,:,s,:) = reshape(matchedVol, s1,s2, 1, []);
+%             Estimation.GridSearch.Y(:,:,:,s) = ...
+%                 reshape(EstimateParametersFromGrid(reshape(Sequences(:,:,:,s),s1*s2,t), Dico{f}.MRSignals, Dico{f}.Parameters.Par), s1,s2, []);
+                        
+            %Errors computation if a reference image is provided
+            if ~isempty(References)
+                [Estimation.GridSearch.Errors.Rmse(s,:), Estimation.GridSearch.Errors.Nrmse(s,:), Estimation.GridSearch.Errors.Mae(s,:), Estimation.GridSearch.Errors.Nmae(s,:)] = ...
+                    EvaluateEstimation(reshape(References(:,:,:,s),s1*s2,size(References,3)), reshape(Estimation.GridSearch.Y(:,:,:,s),s1*s2,size(References,3)));
+            end
+        end
+        Estimation.GridSearch.quantification_time = toc; 
+        
     case 'DBM'
         
         tic
         for s = 1:slices
             %Estimation of parameters
-            Estimation.GridSearch.Y(:,:,:,s) = ...
-                reshape(EstimateParametersFromGrid(reshape(Sequences(:,:,:,s),s1*s2,t), Dico{f}.MRSignals, Dico{f}.Parameters.Par), s1,s2, []);
+            [estim, score, matchedVol] = EstimateParametersFromGrid_Chunk(reshape(Sequences(:,:,:,s),s1*s2,t), Dico{f}.MRSignals, Dico{f}.Parameters.Par);
+            Estimation.GridSearch.Y(:,:,:,s) = reshape(estim, s1,s2, []);
+            Estimation.scoreMap(:,:,s) = reshape(score, s1,s2, []);
+            Estimation.matchedVol(:,:,s,:) = reshape(matchedVol, s1,s2, 1, []);
+%             Estimation.GridSearch.Y(:,:,:,s) = ...
+%                 reshape(EstimateParametersFromGrid(reshape(Sequences(:,:,:,s),s1*s2,t), Dico{f}.MRSignals, Dico{f}.Parameters.Par), s1,s2, []);
                         
             %Errors computation if a reference image is provided
             if ~isempty(References)
